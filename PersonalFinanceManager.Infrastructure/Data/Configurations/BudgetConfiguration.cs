@@ -30,18 +30,18 @@ public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
 			.HasConversion<string>()
 			.HasMaxLength(50);
 
-		builder.HasIndex(b => b.UserId);
-		builder.HasIndex(b => b.CategoryId);
+		builder.Property(b => b.StartDate)
+			.IsRequired();
 
-		builder.HasOne(b => b.Category)
-			.WithMany(c => c.Budgets)
-			.HasForeignKey(b => b.CategoryId)
-			.OnDelete(DeleteBehavior.Restrict);
+		builder.Property(b => b.EndDate)
+			.IsRequired();
 
 		// Computed read-only properties, no backing column/not stored in the DB
 		builder.Ignore(b => b.Remaining);
 		builder.Ignore(b => b.PercentageUsed);
 		builder.Ignore(b => b.IsExceeded);
 		builder.Ignore(b => b.IsActive);
+		builder.HasIndex(b => b.UserId);
+		builder.HasIndex(b => b.CategoryId);
 	}
 }

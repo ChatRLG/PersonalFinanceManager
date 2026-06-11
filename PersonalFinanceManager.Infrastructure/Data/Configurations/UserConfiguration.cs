@@ -35,6 +35,7 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 			.HasConversion<string>()
 			.HasMaxLength(3);
 
+		
 		// Map the Address value object as an owned entity (stored in the same table)
 		builder.OwnsOne(u => u.Address, address =>
 		{
@@ -45,27 +46,30 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 			address.Property(a => a.Country).HasMaxLength(100).HasColumnName("Address_Country");
 		});
 
+		
 		// Relationships
 		builder.HasMany(u => u.Accounts)
 			.WithOne(a => a.User)
 			.HasForeignKey(a => a.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
 
-		builder.Navigation(u => u.Accounts)
-			.UsePropertyAccessMode(PropertyAccessMode.Field);
-
 		builder.HasMany(u => u.Categories)
 			.WithOne(c => c.User)
 			.HasForeignKey(c => c.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
 
-		builder.Navigation(u => u.Categories)
-			.UsePropertyAccessMode(PropertyAccessMode.Field);
-
 		builder.HasMany(u => u.Budgets)
 			.WithOne(b => b.User)
 			.HasForeignKey(b => b.UserId)
 			.OnDelete(DeleteBehavior.Cascade);
+
+
+		// Configure backing field access for read-only collections
+		builder.Navigation(u => u.Accounts)
+			.UsePropertyAccessMode(PropertyAccessMode.Field);
+
+		builder.Navigation(u => u.Categories)
+			.UsePropertyAccessMode(PropertyAccessMode.Field);
 
 		builder.Navigation(u => u.Budgets)
 			.UsePropertyAccessMode(PropertyAccessMode.Field);

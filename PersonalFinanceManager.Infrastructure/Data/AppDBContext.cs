@@ -54,8 +54,15 @@ public class AppDBContext : DbContext
 
 				case EntityState.Modified:
 					entry.Entity.UpdatedAt = now;
-					// Prevent overwriting CreatedAt on update
+					// Prevent overwriting CreatedAt on updates
 					entry.Property(nameof(BaseEntity.CreatedAt)).IsModified = false;
+					break;
+
+				case EntityState.Deleted:
+					// Convert hard deletes to soft deletes
+					entry.State = EntityState.Modified;
+					entry.Entity.IsDeleted = true;
+					entry.Entity.UpdatedAt = now;
 					break;
 			}
 		}

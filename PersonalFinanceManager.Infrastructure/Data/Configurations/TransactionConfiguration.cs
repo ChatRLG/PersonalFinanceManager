@@ -4,7 +4,7 @@ using PersonalFinanceManager.Core.Entities;
 
 namespace PersonalFinanceManager.Infrastructure.Data.Configurations;
 
-public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
+public class TransactionConfiguration : IEntityTypeConfiguration<Core.Entities.Transaction>
 {
 	public void Configure(EntityTypeBuilder<Transaction> builder)
 	{
@@ -25,14 +25,16 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 
 		builder.Property(t => t.Description)
 			.IsRequired()
-			.HasMaxLength(300);
+			.HasMaxLength(500);
 
 		builder.Property(t => t.Notes)
 			.HasMaxLength(1000);
 
-		builder.HasIndex(t => t.AccountId);
-		builder.HasIndex(t => t.CategoryId);
-		builder.HasIndex(t => t.TransactionDate);
+		builder.Property(t => t.TransactionDate)
+			.IsRequired();
+
+		builder.Property(t => t.IsRecurring)
+			.IsRequired();
 
 		// Source account relationship
 		builder.HasOne(t => t.Account)
@@ -52,5 +54,11 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
 			.WithMany(c => c.Transactions)
 			.HasForeignKey(t => t.CategoryId)
 			.OnDelete(DeleteBehavior.Restrict);
+
+
+		builder.HasIndex(t => t.AccountId);
+		builder.HasIndex(t => t.Type);
+		builder.HasIndex(t => t.TransactionDate);
+
 	}
 }

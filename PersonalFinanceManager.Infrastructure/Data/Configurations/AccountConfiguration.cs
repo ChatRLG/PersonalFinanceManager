@@ -31,8 +31,7 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
 			.HasPrecision(18, 2);
 
 		builder.Property(a => a.IsActive)
-			.IsRequired()
-			.HasDefaultValue(true);
+			.IsRequired();
 
 		builder.HasIndex(a => a.UserId);
 
@@ -42,7 +41,10 @@ public class AccountConfiguration : IEntityTypeConfiguration<Account>
 			.HasForeignKey(t => t.AccountId)
 			.OnDelete(DeleteBehavior.Restrict);
 
-		// Ignore computed property — not stored in DB
-		builder.Ignore(a => a.IsActive);
+		//// Ignore computed property — not stored in DB
+		//builder.Ignore(a => a.IsActive);
+
+		builder.Navigation(a => a.Transactions)
+			.UsePropertyAccessMode(PropertyAccessMode.Field);
 	}
 }

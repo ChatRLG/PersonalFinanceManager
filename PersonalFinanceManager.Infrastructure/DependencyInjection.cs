@@ -18,18 +18,27 @@ public static class DependencyInjection
 		IConfiguration configuration)
 	{
 		// ──────────── DbContext ────────────
-		var connectionString = configuration.GetConnectionString("DefaultConnection")
-		                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+		//var connectionString = configuration.GetConnectionString("DefaultConnection")
+		//                       ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+
+		//services.AddDbContext<AppDBContext>(options =>
+		//	options.UseSqlServer(connectionString, sqlOptions =>
+		//	{
+		//		sqlOptions.MigrationsAssembly(typeof(AppDBContext).Assembly.FullName);
+		//		sqlOptions.EnableRetryOnFailure(
+		//			maxRetryCount: 3,
+		//			maxRetryDelay: TimeSpan.FromSeconds(10),
+		//			errorNumbersToAdd: null);
+		//	}));
 
 		services.AddDbContext<AppDBContext>(options =>
-			options.UseSqlServer(connectionString, sqlOptions =>
-			{
-				sqlOptions.MigrationsAssembly(typeof(AppDBContext).Assembly.FullName);
-				sqlOptions.EnableRetryOnFailure(
-					maxRetryCount: 3,
-					maxRetryDelay: TimeSpan.FromSeconds(10),
-					errorNumbersToAdd: null);
-			}));
+			options.UseSqlServer(
+				configuration.GetConnectionString("DefaultConnection"),
+				sqlOptions =>
+				{
+					sqlOptions.MigrationsAssembly(typeof(AppDBContext).Assembly.FullName);
+					sqlOptions.EnableRetryOnFailure(3);
+				}));
 
 		// ──────────── Repositories ────────────
 		services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));

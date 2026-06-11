@@ -28,9 +28,23 @@ public class CategoryConfiguration : IEntityTypeConfiguration<Category>
 
 		builder.HasIndex(c => c.UserId);
 
-		// Composite unique index: no duplicate name+type per user (only for non-deleted)
+		// Composite unique index: same user can't have duplicate names per type
+		// Filtered to only non-deleted rows
 		builder.HasIndex(c => new { c.UserId, c.Name, c.Type })
 			.IsUnique()
 			.HasFilter("[IsDeleted] = 0");
+
+		// Tell EF how to access the private backing field for the Budgets collection
+		builder.HasMany(c => c.Budgets)
+			.WithOne(b => b.Category)
+			.HasForeignKey(b => b.CategoryId)
+			.OnDelete(DeleteBehavior.Restrict);
+
+		builder.Navigation(c => c.Budgets)
+			.UsePropertyAccessMode(PropertyAccessMode.Field);
+
+		// Tell EF how to access the private backing field for the Transactions collection
+		builder.Navigation(c => c.Transactions)
+			.UsePropertyAccessMode(PropertyAccessMode.Field);
 	}
 }

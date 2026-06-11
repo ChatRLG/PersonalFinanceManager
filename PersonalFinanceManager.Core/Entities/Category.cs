@@ -1,5 +1,4 @@
-﻿using System.Transactions;
-using PersonalFinanceManager.Core.Enums;
+﻿using PersonalFinanceManager.Core.Enums;
 
 namespace PersonalFinanceManager.Core.Entities;
 
