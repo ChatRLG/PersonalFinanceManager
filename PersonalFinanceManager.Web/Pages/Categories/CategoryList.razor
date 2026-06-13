@@ -1,0 +1,146 @@
+@page "/categories"
+@attribute [Authorize]
+@inject ICategoryService CategoryService
+@inject ToastService Toast
+
+<PageTitle>Categories — PFM</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-tags me-2"></i>Categories</h4>
+    <a href="/categories/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>New Category
+    </a>
+</div>
+
+@if (_isLoading)
+{
+    <LoadingSpinner />
+}
+else
+{
+    <div class="row g-4">
+        <!-- Income Categories -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 text-success"><i class="bi bi-arrow-down-circle me-2"></i>Income</h6>
+                </div>
+                <div class="card-body p-0">
+                    @if (_incomeCategories.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var cat in _incomeCategories)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="me-2">@(cat.Icon ?? "📁")</span>
+                                        <span class="fw-semibold">@cat.Name</span>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => DeleteCategory(cat)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3 text-muted">No income categories</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Expense Categories -->
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0 text-danger"><i class="bi bi-arrow-up-circle me-2"></i>Expense</h6>
+                </div>
+                <div class="card-body p-0">
+                    @if (_expenseCategories.Any())
+                    {
+                        <div class="list-group list-group-flush">
+                            @foreach (var cat in _expenseCategories)
+                            {
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <span class="me-2">@(cat.Icon ?? "📁")</span>
+                                        <span class="fw-semibold">@cat.Name</span>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-danger"
+                                            @onclick="() => DeleteCategory(cat)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-3 text-muted">No expense categories</div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+	private bool _isLoading = true;
+	private List<CategoryDto> _incomeCategories = new();
+	private List<CategoryDto> _expenseCategories = new();
+
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadCategories();
+	}
+
+	private async Task LoadCategories()
+	{
+		_isLoading = true;
+		try
+		{
+			var result = await CategoryService.GetAllAsync();
+			if (result.IsSuccess && result.Data != null)
+			{
+				_incomeCategories = result.Data.Where(c => c.Type == "Income").ToList();
+				_expenseCategories = result.Data.Where(c => c.Type == "Expense").ToList();
+			}
+			else
+			{
+				Toast.ShowError(result.Message ?? "Failed to load categories.");
+			}
+		}
+		catch (Exception ex)
+		{
+			Toast.ShowError($"Error: {ex.Message}");
+		}
+		finally
+		{
+			_isLoading = false;
+		}
+	}
+
+	private async Task DeleteCategory(CategoryDto cat)
+	{
+		try
+		{
+			var result = await CategoryService.DeleteAsync(cat.Id);
+			if (result.IsSuccess)
+			{
+				Toast.ShowSuccess($"Category '{cat.Name}' deleted.");
+				await LoadCategories();
+			}
+			else
+			{
+				Toast.ShowError(result.Message ?? "Delete failed.");
+			}
+		}
+		catch (Exception ex)
+		{
+			Toast.ShowError($"Error: {ex.Message}");
+		}
+	}
+}

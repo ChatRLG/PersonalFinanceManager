@@ -1,0 +1,22 @@
+﻿<span class="@CssClass">@FormatAmount()</span>
+
+@code {
+	[Parameter] public decimal Amount { get; set; }
+	[Parameter] public string Currency { get; set; } = "USD";
+	[Parameter] public string? CssClass { get; set; }
+
+	private string FormatAmount()
+	{
+		var symbol = Currency switch
+		{
+			"USD" => "$",
+			"EUR" => "€",
+			"GBP" => "£",
+			"LKR" => "Rs.",
+			"JPY" => "¥",
+			_ => Currency + " "
+		};
+
+		return $"{symbol}{Amount:N2}";
+	}
+}

@@ -1,0 +1,176 @@
+@page "/accounts"
+@attribute [Authorize]
+@inject IAccountService AccountService
+@inject NavigationManager Navigation
+@inject ToastService Toast
+
+<PageTitle>Accounts — PFM</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-bank me-2"></i>Accounts</h4>
+    <a href="/accounts/create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>New Account
+    </a>
+</div>
+
+@if (_isLoading)
+{
+    <LoadingSpinner />
+}
+else if (!_accounts.Any())
+{
+    <div class="text-center py-5">
+        <i class="bi bi-bank display-1 text-muted"></i>
+        <h5 class="mt-3 text-muted">No accounts found</h5>
+        <a href="/accounts/create" class="btn btn-primary mt-2">Create your first account</a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var account in _accounts)
+        {
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm h-100 @(!account.IsActive ? "opacity-50" : "")">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="fw-bold mb-0">@account.Name</h6>
+                                <small class="text-muted">@account.Type</small>
+                            </div>
+                            <span class="badge @(account.IsActive ? "bg-success" : "bg-secondary")">
+                                @(account.IsActive ? "Active" : "Inactive")
+                            </span>
+                        </div>
+
+                        <h4 class="@(account.Balance >= 0 ? "text-success" : "text-danger") fw-bold">
+                            <CurrencyDisplay Amount="@account.Balance" Currency="@account.Currency" />
+                        </h4>
+
+                        <div class="d-flex gap-2 mt-3">
+                            <a href="/accounts/@account.Id"
+                               class="btn btn-sm btn-outline-primary flex-fill">
+                                <i class="bi bi-eye me-1"></i>Details
+                            </a>
+                            <button class="btn btn-sm btn-outline-warning flex-fill"
+                                    @onclick="() => ToggleStatus(account)">
+                                <i class="bi @(account.IsActive ? "bi-pause-circle" : "bi-play-circle") me-1"></i>
+                                @(account.IsActive ? "Deactivate" : "Activate")
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger"
+                                    @onclick="() => ShowDeleteConfirm(account)">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+
+@if (_accountToDelete != null)
+{
+    <ConfirmDialog Title="Delete Account"
+                   Message="@($"Are you sure you want to delete '{_accountToDelete.Name}'? This cannot be undone.")"
+                   OnConfirmed="ConfirmDelete"
+                   OnCancelled="CancelDelete"
+                   @ref="_confirmDialog" />
+}
+
+@code {
+    private bool _isLoading = true;
+    private List<AccountDto> _accounts = new();
+    private AccountDto? _accountToDelete;
+    private ConfirmDialog? _confirmDialog;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAccounts();
+    }
+
+    private async Task LoadAccounts()
+    {
+        _isLoading = true;
+        try
+        {
+            var result = await AccountService.GetAllAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                _accounts = result.Data;
+            }
+            else
+            {
+                Toast.ShowError(result.Message ?? "Failed to load accounts.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private async Task ToggleStatus(AccountDto account)
+    {
+        try
+        {
+            var result = account.IsActive
+                ? await AccountService.DeactivateAsync(account.Id)
+                : await AccountService.ActivateAsync(account.Id);
+
+            if (result.IsSuccess)
+            {
+                Toast.ShowSuccess($"Account '{account.Name}' {(account.IsActive ? "deactivated" : "activated")}.");
+                await LoadAccounts();
+            }
+            else
+            {
+                Toast.ShowError(result.Message ?? "Operation failed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+    }
+
+    private void ShowDeleteConfirm(AccountDto account)
+    {
+        _accountToDelete = account;
+        StateHasChanged();
+        _confirmDialog?.Show();
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (_accountToDelete == null) return;
+
+        try
+        {
+            var result = await AccountService.DeleteAsync(_accountToDelete.Id);
+            if (result.IsSuccess)
+            {
+                Toast.ShowSuccess($"Account '{_accountToDelete.Name}' deleted.");
+                _accountToDelete = null;
+                await LoadAccounts();
+            }
+            else
+            {
+                Toast.ShowError(result.Message ?? "Delete failed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+    }
+
+    private void CancelDelete()
+    {
+        _accountToDelete = null;
+    }
+}

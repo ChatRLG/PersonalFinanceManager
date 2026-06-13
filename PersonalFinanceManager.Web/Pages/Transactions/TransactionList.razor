@@ -1,0 +1,100 @@
+@code {
+    private bool _isLoading = true;
+    private List<TransactionDto> _allTransactions = new();
+    private List<TransactionDto> _filteredTransactions = new();
+    private List<AccountDto> _accounts = new();
+
+    private string? _filterType;
+    private Guid? _filterAccountId;
+    private DateTime? _filterFrom;
+    private DateTime? _filterTo;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var txnTask = TransactionService.GetAllAsync();
+            var accountTask = AccountService.GetAllAsync();
+
+            await Task.WhenAll(txnTask, accountTask);
+
+            if (txnTask.Result.IsSuccess && txnTask.Result.Data != null)
+                _allTransactions = txnTask.Result.Data;
+
+            if (accountTask.Result.IsSuccess && accountTask.Result.Data != null)
+                _accounts = accountTask.Result.Data;
+
+            _filteredTransactions = _allTransactions;
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error loading transactions: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void OnTypeFilterChanged(ChangeEventArgs e)
+    {
+        _filterType = e.Value?.ToString();
+    }
+
+    private void OnAccountFilterChanged(ChangeEventArgs e)
+    {
+        var val = e.Value?.ToString();
+        _filterAccountId = Guid.TryParse(val, out var id) ? id : null;
+    }
+
+    private void ApplyFilters()
+    {
+        _filteredTransactions = _allTransactions;
+
+        if (!string.IsNullOrEmpty(_filterType))
+            _filteredTransactions = _filteredTransactions
+                .Where(t => t.Type == _filterType).ToList();
+
+        if (_filterAccountId.HasValue)
+            _filteredTransactions = _filteredTransactions
+                .Where(t => t.AccountId == _filterAccountId.Value).ToList();
+
+        if (_filterFrom.HasValue)
+            _filteredTransactions = _filteredTransactions
+                .Where(t => t.TransactionDate >= _filterFrom.Value).ToList();
+
+        if (_filterTo.HasValue)
+            _filteredTransactions = _filteredTransactions
+                .Where(t => t.TransactionDate <= _filterTo.Value).ToList();
+    }
+
+    private async Task DeleteTransaction(TransactionDto txn)
+    {
+        try
+        {
+            var result = await TransactionService.DeleteAsync(txn.Id);
+            if (result.IsSuccess)
+            {
+                Toast.ShowSuccess($"Transaction '{txn.Description}' deleted.");
+                _allTransactions.Remove(txn);
+                ApplyFilters();
+            }
+            else
+            {
+                Toast.ShowError(result.Message ?? "Delete failed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+    }
+
+    private string GetTypeBadgeClass(string type) => type switch
+    {
+        "Income" => "bg-success",
+        "Expense" => "bg-danger",
+        "Transfer" => "bg-info",
+        _ => "bg-secondary"
+    };
+}

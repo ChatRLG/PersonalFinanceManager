@@ -1,0 +1,10 @@
+﻿/* Sidebar active link styling */
+::deep .nav-link.active {
+	background-color: rgba(255, 255, 255, 0.15) !important;
+	color: #ffffff !important;
+}
+
+::deep .nav-link:hover {
+	background-color: rgba(255, 255, 255, 0.1);
+	color: #ffffff !important;
+}
