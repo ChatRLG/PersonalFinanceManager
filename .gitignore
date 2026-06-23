@@ -488,3 +488,10 @@ obj/
 *.suo
 *.userosscache
 *.sln.docstates
+
+# Claude Code
+CLAUDE.md
+
+# Project docs (local only), except the tracked roadmap
+docs/*
+!docs/ROADMAP.md
