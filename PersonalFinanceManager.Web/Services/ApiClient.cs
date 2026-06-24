@@ -1,113 +1,136 @@
-﻿using System.Net;
-using System.Net.Http.Json;
+﻿using System.Net.Http.Json;
 using PersonalFinanceManager.Web.Models;
 
 namespace PersonalFinanceManager.Web.Services;
 
 public class ApiClient : IApiClient
 {
-	private readonly HttpClient _httpClient;
+	private readonly HttpClient _http;
 	private readonly ILogger<ApiClient> _logger;
 
-	public ApiClient(HttpClient httpClient, ILogger<ApiClient> logger)
+	public ApiClient(HttpClient http, ILogger<ApiClient> logger)
 	{
-		_httpClient = httpClient;
+		_http = http;
 		_logger = logger;
 	}
 
-	public async Task<ApiResponse<T>> GetAsync<T>(string endpoint)
+	public async Task<ApiResult<T>> GetAsync<T>(string url)
 	{
 		try
 		{
-			var response = await _httpClient.GetAsync(endpoint);
-			return await HandleResponse<T>(response);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "GET {Endpoint} failed", endpoint);
-			return ErrorResponse<T>("Unable to connect to the server. Please try again.");
-		}
-	}
-
-	public async Task<ApiResponse<T>> PostAsync<T>(string endpoint, object data)
-	{
-		try
-		{
-			var response = await _httpClient.PostAsJsonAsync(endpoint, data);
-			return await HandleResponse<T>(response);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "POST {Endpoint} failed", endpoint);
-			return ErrorResponse<T>("Unable to connect to the server. Please try again.");
-		}
-	}
-
-	public async Task<ApiResponse<T>> PutAsync<T>(string endpoint, object data)
-	{
-		try
-		{
-			var response = await _httpClient.PutAsJsonAsync(endpoint, data);
-			return await HandleResponse<T>(response);
-		}
-		catch (Exception ex)
-		{
-			_logger.LogError(ex, "PUT {Endpoint} failed", endpoint);
-			return ErrorResponse<T>("Unable to connect to the server. Please try again.");
-		}
-	}
-
-	public async Task<ApiResponse> DeleteAsync(string endpoint)
-	{
-		try
-		{
-			var response = await _httpClient.DeleteAsync(endpoint);
-
+			var response = await _http.GetAsync(url);
 			if (response.IsSuccessStatusCode)
-				return new ApiResponse { IsSuccess = true, Message = "Deleted successfully" };
-
-			var errorContent = await response.Content.ReadAsStringAsync();
-			return new ApiResponse
 			{
-				IsSuccess = false,
-				Message = response.StatusCode == HttpStatusCode.NotFound
-					? "Resource not found"
-					: $"Delete failed: {errorContent}"
-			};
+				var data = await response.Content.ReadFromJsonAsync<T>();
+				return ApiResult<T>.Success(data!);
+			}
+
+			var error = await response.Content.ReadAsStringAsync();
+			_logger.LogWarning("GET {Url} failed: {Status} — {Error}", url, response.StatusCode, error);
+			return ApiResult<T>.Failure(error);
 		}
 		catch (Exception ex)
 		{
-			_logger.LogError(ex, "DELETE {Endpoint} failed", endpoint);
-			return new ApiResponse
-			{
-				IsSuccess = false,
-				Message = "Unable to connect to the server."
-			};
+			_logger.LogError(ex, "GET {Url} exception", url);
+			return ApiResult<T>.Failure(ex.Message);
 		}
 	}
 
-	// ─────────────────────── Helpers ───────────────────────
-
-	private static async Task<ApiResponse<T>> HandleResponse<T>(HttpResponseMessage response)
+	public async Task<ApiResult<TResponse>> PostAsync<TRequest, TResponse>(string url, TRequest data)
 	{
-		if (response.IsSuccessStatusCode)
+		try
 		{
-			var data = await response.Content.ReadFromJsonAsync<T>();
-			return new ApiResponse<T> { IsSuccess = true, Data = data };
+			var response = await _http.PostAsJsonAsync(url, data);
+			if (response.IsSuccessStatusCode)
+			{
+				var result = await response.Content.ReadFromJsonAsync<TResponse>();
+				return ApiResult<TResponse>.Success(result!);
+			}
+
+			var error = await response.Content.ReadAsStringAsync();
+			_logger.LogWarning("POST {Url} failed: {Status} — {Error}", url, response.StatusCode, error);
+			return ApiResult<TResponse>.Failure(error);
 		}
-
-		var error = await response.Content.ReadAsStringAsync();
-
-		return response.StatusCode switch
+		catch (Exception ex)
 		{
-			HttpStatusCode.Unauthorized => ErrorResponse<T>("Session expired. Please log in again."),
-			HttpStatusCode.Forbidden => ErrorResponse<T>("You do not have permission to perform this action."),
-			HttpStatusCode.NotFound => ErrorResponse<T>("The requested resource was not found."),
-			HttpStatusCode.BadRequest => ErrorResponse<T>(error),
-			_ => ErrorResponse<T>($"Server error ({(int)response.StatusCode}): {error}")
-		};
+			_logger.LogError(ex, "POST {Url} exception", url);
+			return ApiResult<TResponse>.Failure(ex.Message);
+		}
 	}
 
-	private static ApiResponse<T> ErrorResponse<T>(string message)
-		=> new() { IsSuccess = false, Message = message };
+	public async Task<ApiResult> PostAsync<TRequest>(string url, TRequest data)
+	{
+		try
+		{
+			var response = await _http.PostAsJsonAsync(url, data);
+			if (response.IsSuccessStatusCode)
+				return ApiResult.Success();
+
+			var error = await response.Content.ReadAsStringAsync();
+			_logger.LogWarning("POST {Url} failed: {Status} — {Error}", url, response.StatusCode, error);
+			return ApiResult.Failure(error);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "POST {Url} exception", url);
+			return ApiResult.Failure(ex.Message);
+		}
+	}
+
+	public async Task<ApiResult> PutAsync(string url)
+	{
+		try
+		{
+			var response = await _http.PutAsync(url, null);
+			if (response.IsSuccessStatusCode)
+				return ApiResult.Success();
+
+			var error = await response.Content.ReadAsStringAsync();
+			_logger.LogWarning("PUT {Url} failed: {Status} — {Error}", url, response.StatusCode, error);
+			return ApiResult.Failure(error);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "PUT {Url} exception", url);
+			return ApiResult.Failure(ex.Message);
+		}
+	}
+
+	public async Task<ApiResult> PutAsync<TRequest>(string url, TRequest data)
+	{
+		try
+		{
+			var response = await _http.PutAsJsonAsync(url, data);
+			if (response.IsSuccessStatusCode)
+				return ApiResult.Success();
+
+			var error = await response.Content.ReadAsStringAsync();
+			_logger.LogWarning("PUT {Url} failed: {Status} — {Error}", url, response.StatusCode, error);
+			return ApiResult.Failure(error);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "PUT {Url} exception", url);
+			return ApiResult.Failure(ex.Message);
+		}
+	}
+
+	public async Task<ApiResult> DeleteAsync(string url)
+	{
+		try
+		{
+			var response = await _http.DeleteAsync(url);
+			if (response.IsSuccessStatusCode)
+				return ApiResult.Success();
+
+			var error = await response.Content.ReadAsStringAsync();
+			_logger.LogWarning("DELETE {Url} failed: {Status} — {Error}", url, response.StatusCode, error);
+			return ApiResult.Failure(error);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "DELETE {Url} exception", url);
+			return ApiResult.Failure(ex.Message);
+		}
+	}
 }

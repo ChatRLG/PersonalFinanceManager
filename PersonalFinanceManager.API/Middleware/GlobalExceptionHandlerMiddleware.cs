@@ -37,6 +37,7 @@ public class GlobalExceptionHandlerMiddleware
 			EntityNotFoundException ex => (HttpStatusCode.NotFound, ex.Message),
 			InsufficientFundsException ex => (HttpStatusCode.BadRequest, ex.Message),
 			BudgetExceededException ex => (HttpStatusCode.BadRequest, ex.Message),
+			UnauthorizedException ex => (HttpStatusCode.Unauthorized, ex.Message),
 			DomainException ex => (HttpStatusCode.BadRequest, ex.Message),
 			ArgumentException ex => (HttpStatusCode.BadRequest, ex.Message),
 			InvalidOperationException ex => (HttpStatusCode.Conflict, ex.Message),

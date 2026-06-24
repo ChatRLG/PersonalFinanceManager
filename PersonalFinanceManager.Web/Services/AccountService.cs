@@ -1,66 +1,43 @@
-﻿using Microsoft.AspNetCore.Components.Authorization;
-using PersonalFinanceManager.Web.Auth;
-using PersonalFinanceManager.Web.Services;
+﻿using PersonalFinanceManager.Web.Models;
 
-var builder = WebApplication.CreateBuilder(args);
+namespace PersonalFinanceManager.Web.Services;
 
-// ── Razor / Blazor ──────────────────────────────────────
-builder.Services.AddRazorPages();
-builder.Services.AddServerSideBlazor();
-
-// ── Custom Local Storage ────────────────────────────────
-builder.Services.AddScoped<ILocalStorageService, LocalStorageService>();
-
-// ── Toast Notifications ─────────────────────────────────
-builder.Services.AddScoped<ToastService>();
-
-// ── Authentication State ────────────────────────────────
-builder.Services.AddScoped<JwtAuthStateProvider>();
-builder.Services.AddScoped<AuthenticationStateProvider>(
-	provider => provider.GetRequiredService<JwtAuthStateProvider>());
-
-// ── HTTP Client for API communication ───────────────────
-var apiBaseUrl = builder.Configuration.GetValue<string>("ApiSettings:BaseUrl")
-				 ?? "http://localhost:5122";
-
-builder.Services.AddScoped<AuthTokenHandler>();
-
-builder.Services.AddHttpClient("PFM_API", client =>
+public class AccountService : IAccountService
 {
-	client.BaseAddress = new Uri(apiBaseUrl);
-	client.DefaultRequestHeaders.Add("Accept", "application/json");
-})
-.AddHttpMessageHandler<AuthTokenHandler>();
+	private readonly IApiClient _api;
 
-builder.Services.AddScoped<IApiClient>(provider =>
-{
-	var factory = provider.GetRequiredService<IHttpClientFactory>();
-	var httpClient = factory.CreateClient("PFM_API");
-	var logger = provider.GetRequiredService<ILogger<ApiClient>>();
-	return new ApiClient(httpClient, logger);
-});
+	public AccountService(IApiClient api)
+	{
+		_api = api;
+	}
 
-// ── Domain Services ─────────────────────────────────────
-builder.Services.AddScoped<IAuthService, AuthService>();
-builder.Services.AddScoped<IAccountService, AccountService>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-builder.Services.AddScoped<ITransactionService, TransactionService>();
-builder.Services.AddScoped<IBudgetService, BudgetService>();
+	public async Task<ApiResult<List<AccountDto>>> GetAllAsync()
+	{
+		return await _api.GetAsync<List<AccountDto>>("api/accounts");
+	}
 
-var app = builder.Build();
+	public async Task<ApiResult<AccountDto>> GetByIdAsync(Guid id)
+	{
+		return await _api.GetAsync<AccountDto>($"api/accounts/{id}");
+	}
 
-// ── Middleware ───────────────────────────────────────────
-if (!app.Environment.IsDevelopment())
-{
-	app.UseExceptionHandler("/Error");
-	app.UseHsts();
+	public async Task<ApiResult<AccountDto>> CreateAsync(CreateAccountModel model)
+	{
+		return await _api.PostAsync<CreateAccountModel, AccountDto>("api/accounts", model);
+	}
+
+	public async Task<ApiResult> DeleteAsync(Guid id)
+	{
+		return await _api.DeleteAsync($"api/accounts/{id}");
+	}
+
+	public async Task<ApiResult> DeactivateAsync(Guid id)
+	{
+		return await _api.PutAsync($"api/accounts/{id}/deactivate");
+	}
+
+	public async Task<ApiResult> ActivateAsync(Guid id)
+	{
+		return await _api.PutAsync($"api/accounts/{id}/activate");
+	}
 }
-
-app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseRouting();
-
-app.MapBlazorHub();
-app.MapFallbackToPage("/_Host");
-
-app.Run();

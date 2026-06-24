@@ -11,21 +11,18 @@ public class BudgetService : IBudgetService
 		_api = api;
 	}
 
-	public async Task<ApiResponse<List<BudgetDto>>> GetAllAsync()
-		=> await _api.GetAsync<List<BudgetDto>>("api/budgets");
+	public async Task<ApiResult<List<BudgetDto>>> GetAllAsync()
+	{
+		return await _api.GetAsync<List<BudgetDto>>("api/budgets");
+	}
 
-	public async Task<ApiResponse<List<BudgetDto>>> GetActiveAsync()
-		=> await _api.GetAsync<List<BudgetDto>>("api/budgets?active=true");
+	public async Task<ApiResult<BudgetDto>> CreateAsync(CreateBudgetModel model)
+	{
+		return await _api.PostAsync<CreateBudgetModel, BudgetDto>("api/budgets", model);
+	}
 
-	public async Task<ApiResponse<BudgetDto>> GetByIdAsync(Guid id)
-		=> await _api.GetAsync<BudgetDto>($"api/budgets/{id}");
-
-	public async Task<ApiResponse<BudgetDto>> CreateAsync(CreateBudgetModel model)
-		=> await _api.PostAsync<BudgetDto>("api/budgets", model);
-
-	public async Task<ApiResponse<BudgetDto>> UpdateAsync(Guid id, UpdateBudgetModel model)
-		=> await _api.PutAsync<BudgetDto>($"api/budgets/{id}", model);
-
-	public async Task<ApiResponse> DeleteAsync(Guid id)
-		=> await _api.DeleteAsync($"api/budgets/{id}");
+	public async Task<ApiResult> DeleteAsync(Guid id)
+	{
+		return await _api.DeleteAsync($"api/budgets/{id}");
+	}
 }
