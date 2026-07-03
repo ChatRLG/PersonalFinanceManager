@@ -4,10 +4,10 @@ namespace PersonalFinanceManager.Web.Services;
 
 public interface IBudgetService
 {
-	Task<ApiResponse<List<BudgetDto>>> GetAllAsync();
-	Task<ApiResponse<List<BudgetDto>>> GetActiveAsync();
-	Task<ApiResponse<BudgetDto>> GetByIdAsync(Guid id);
-	Task<ApiResponse<BudgetDto>> CreateAsync(CreateBudgetModel model);
-	Task<ApiResponse<BudgetDto>> UpdateAsync(Guid id, UpdateBudgetModel model);
-	Task<ApiResponse> DeleteAsync(Guid id);
+	Task<ApiResult<List<BudgetDto>>> GetAllAsync();
+	Task<ApiResult<List<BudgetDto>>> GetActiveAsync();
+	Task<ApiResult<BudgetDto>> GetByIdAsync(Guid id);
+	Task<ApiResult<BudgetDto>> CreateAsync(CreateBudgetModel model);
+	Task<ApiResult<BudgetDto>> UpdateAsync(Guid id, UpdateBudgetModel model);
+	Task<ApiResult> DeleteAsync(Guid id);
 }

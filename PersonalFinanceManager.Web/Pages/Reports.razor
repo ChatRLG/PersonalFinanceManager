@@ -1,0 +1,237 @@
+@page "/reports"
+@attribute [Authorize]
+@inject IDashboardService DashboardService
+@inject ITransactionService TransactionService
+@inject IAccountService AccountService
+@inject ToastService Toast
+@inject IJSRuntime JS
+
+<PageTitle>Reports — PFM</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0"><i class="bi bi-graph-up me-2"></i>Reports</h4>
+</div>
+
+@if (_isLoading)
+{
+    <LoadingSpinner Message="Loading reports..." />
+}
+else
+{
+    <!-- Summary Row -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <p class="text-muted small mb-1">Total Balance</p>
+                <h3 class="fw-bold text-primary">
+                    <CurrencyDisplay Amount="@(_dashboard?.TotalBalance ?? 0)" />
+                </h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <p class="text-muted small mb-1">This Month Income</p>
+                <h3 class="fw-bold text-success">
+                    <CurrencyDisplay Amount="@(_dashboard?.MonthlyIncome ?? 0)" />
+                </h3>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center py-3">
+                <p class="text-muted small mb-1">This Month Expenses</p>
+                <h3 class="fw-bold text-danger">
+                    <CurrencyDisplay Amount="@(_dashboard?.MonthlyExpenses ?? 0)" />
+                </h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-4">
+        <!-- Spending by Category -->
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Spending by Category</h6>
+                </div>
+                <div class="card-body">
+                    @if (_dashboard?.SpendingByCategory.Any() == true)
+                    {
+                        <div style="height: 300px;">
+                            <canvas id="rptCategoryChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-5 text-muted">No spending data this month</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Income vs Expenses -->
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Income vs Expenses — This Month</h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 300px;">
+                        <canvas id="rptIncomeExpenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Top Transactions Table -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-receipt me-2"></i>Recent Transactions</h6>
+            <a href="/transactions" class="btn btn-sm btn-outline-primary">View All</a>
+        </div>
+        <div class="card-body p-0">
+            @if (_dashboard?.RecentTransactions.Any() == true)
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Date</th>
+                                <th>Description</th>
+                                <th>Category</th>
+                                <th>Account</th>
+                                <th>Type</th>
+                                <th class="text-end">Amount</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var txn in _dashboard.RecentTransactions)
+                            {
+                                <tr>
+                                    <td class="text-muted small">@txn.TransactionDate.ToString("MMM dd, yyyy")</td>
+                                    <td class="fw-semibold">@txn.Description</td>
+                                    <td><small class="text-muted">@txn.CategoryName</small></td>
+                                    <td><small class="text-muted">@txn.AccountName</small></td>
+                                    <td>
+                                        <span class="badge @GetTypeBadgeClass(txn.Type)">@txn.Type</span>
+                                    </td>
+                                    <td class="text-end fw-bold @(txn.Type == "Income" ? "text-success" : "text-danger")">
+                                        <CurrencyDisplay Amount="@txn.Amount" Currency="@txn.Currency" />
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">No transactions yet</div>
+            }
+        </div>
+    </div>
+
+    <!-- Account Balances -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+            <h6 class="mb-0"><i class="bi bi-bank me-2"></i>Account Balances</h6>
+            <a href="/accounts" class="btn btn-sm btn-outline-primary">Manage</a>
+        </div>
+        <div class="card-body p-0">
+            @if (_dashboard?.Accounts.Any() == true)
+            {
+                <div class="list-group list-group-flush">
+                    @foreach (var acc in _dashboard.Accounts)
+                    {
+                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                            <div>
+                                <span class="fw-semibold">@acc.Name</span>
+                                <span class="badge bg-secondary ms-2">@acc.Type</span>
+                                @if (!acc.IsActive)
+                                {
+                                    <span class="badge bg-warning ms-1">Inactive</span>
+                                }
+                            </div>
+                            <CurrencyDisplay Amount="@acc.Balance"
+                                             Currency="@acc.Currency"
+                                             CssClass="@(acc.Balance >= 0 ? "fw-bold text-success" : "fw-bold text-danger")" />
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <div class="text-center py-4 text-muted">No accounts yet</div>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isLoading = true;
+    private DashboardDto? _dashboard;
+
+    private static readonly string[] DefaultColours =
+    [
+        "#4e79a7", "#f28e2b", "#e15759", "#76b7b2",
+        "#59a14f", "#edc948", "#b07aa1", "#ff9da7",
+        "#9c755f", "#bab0ac"
+    ];
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var result = await DashboardService.GetAsync();
+            if (result.IsSuccess)
+                _dashboard = result.Data;
+            else
+                Toast.ShowError(result.Message ?? "Failed to load reports.");
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error loading reports: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_dashboard != null)
+            await RenderCharts();
+    }
+
+    private async Task RenderCharts()
+    {
+        if (_dashboard == null) return;
+
+        // Spending by category doughnut
+        if (_dashboard.SpendingByCategory.Any())
+        {
+            var labels  = _dashboard.SpendingByCategory.Select(c => c.CategoryName).ToArray();
+            var data    = _dashboard.SpendingByCategory.Select(c => (double)c.Percentage).ToArray();
+            var colours = _dashboard.SpendingByCategory
+                .Select((c, i) => string.IsNullOrEmpty(c.Colour) ? DefaultColours[i % DefaultColours.Length] : c.Colour)
+                .ToArray();
+            await JS.InvokeVoidAsync("chartHelper.renderDoughnut", "rptCategoryChart", labels, data, colours);
+        }
+
+        // Income vs expenses bar
+        var monthLabel  = new[] { DateTime.Now.ToString("MMMM yyyy") };
+        var incomeData  = new[] { (double)_dashboard.MonthlyIncome };
+        var expenseData = new[] { (double)_dashboard.MonthlyExpenses };
+        await JS.InvokeVoidAsync("chartHelper.renderIncomeExpenseBar", "rptIncomeExpenseChart", monthLabel, incomeData, expenseData);
+    }
+
+    private static string GetTypeBadgeClass(string type) => type switch
+    {
+        "Income"   => "bg-success",
+        "Expense"  => "bg-danger",
+        "Transfer" => "bg-info",
+        _          => "bg-secondary"
+    };
+}

@@ -19,9 +19,9 @@ public class AuthService : IAuthService
 		_authStateProvider = authStateProvider;
 	}
 
-	public async Task<ApiResponse<AuthResponseModel>> LoginAsync(LoginModel model)
+	public async Task<ApiResult<AuthResponseModel>> LoginAsync(LoginModel model)
 	{
-		var result = await _api.PostAsync<AuthResponseModel>("api/auth/login", model);
+		var result = await _api.PostAsync<LoginModel, AuthResponseModel>("api/auth/login", model);
 
 		if (result.IsSuccess && result.Data != null)
 		{
@@ -32,9 +32,9 @@ public class AuthService : IAuthService
 		return result;
 	}
 
-	public async Task<ApiResponse<AuthResponseModel>> RegisterAsync(RegisterModel model)
+	public async Task<ApiResult<AuthResponseModel>> RegisterAsync(RegisterModel model)
 	{
-		var result = await _api.PostAsync<AuthResponseModel>("api/auth/register", model);
+		var result = await _api.PostAsync<RegisterModel, AuthResponseModel>("api/auth/register", model);
 
 		if (result.IsSuccess && result.Data != null)
 		{

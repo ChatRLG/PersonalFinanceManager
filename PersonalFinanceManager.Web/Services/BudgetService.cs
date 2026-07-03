@@ -25,4 +25,19 @@ public class BudgetService : IBudgetService
 	{
 		return await _api.DeleteAsync($"api/budgets/{id}");
 	}
+
+	public async Task<ApiResult<List<BudgetDto>>> GetActiveAsync()
+	{
+		return await _api.GetAsync<List<BudgetDto>>("api/budgets/active");
+	}
+
+	public async Task<ApiResult<BudgetDto>> GetByIdAsync(Guid id)
+	{
+		return await _api.GetAsync<BudgetDto>($"api/budgets/{id}");
+	}
+
+	public async Task<ApiResult<BudgetDto>> UpdateAsync(Guid id, UpdateBudgetModel model)
+	{
+		return await _api.PutAsync<UpdateBudgetModel, BudgetDto>($"api/budgets/{id}", model);
+	}
 }

@@ -82,7 +82,7 @@
 							<label class="form-label">Destination Account</label>
 							<InputSelect class="form-select" @bind-Value="_model.DestinationAccountId">
 								<option value="">— Select Destination —</option>
-								@foreach (var account in _accounts.Where(a => a.IsActive && a.Id.ToString() != _model.AccountId))
+								@foreach (var account in _accounts.Where(a => a.IsActive && a.Id != _model.AccountId))
 								{
 									<option value="@account.Id">@account.Name (@account.Currency)</option>
 								}

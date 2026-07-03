@@ -81,3 +81,36 @@ else
         </div>
     </div>
 }
+
+@code {
+    [Parameter] public Guid AccountId { get; set; }
+
+    private bool _isLoading = true;
+    private AccountDto? _account;
+    private List<TransactionDto> _transactions = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var accTask = AccountService.GetByIdAsync(AccountId);
+            var txnTask = TransactionService.GetByAccountAsync(AccountId);
+
+            await Task.WhenAll(accTask, txnTask);
+
+            if (accTask.Result.IsSuccess && accTask.Result.Data != null)
+                _account = accTask.Result.Data;
+
+            if (txnTask.Result.IsSuccess && txnTask.Result.Data != null)
+                _transactions = txnTask.Result.Data;
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error loading account: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+}

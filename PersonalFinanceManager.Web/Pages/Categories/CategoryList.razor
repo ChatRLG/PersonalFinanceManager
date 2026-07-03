@@ -37,7 +37,8 @@ else
                                         <span class="fw-semibold">@cat.Name</span>
                                     </div>
                                     <button class="btn btn-sm btn-outline-danger"
-                                            @onclick="() => DeleteCategory(cat)">
+                                            @onclick="() => ConfirmDelete(cat)"
+                                            title="Delete category">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -70,7 +71,8 @@ else
                                         <span class="fw-semibold">@cat.Name</span>
                                     </div>
                                     <button class="btn btn-sm btn-outline-danger"
-                                            @onclick="() => DeleteCategory(cat)">
+                                            @onclick="() => ConfirmDelete(cat)"
+                                            title="Delete category">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
@@ -87,60 +89,82 @@ else
     </div>
 }
 
+<ConfirmDialog @ref="_confirmDialog"
+               Title="Delete Category"
+               Message="@_confirmMessage"
+               ConfirmText="Delete"
+               OnConfirmed="ExecuteDelete" />
+
 @code {
-	private bool _isLoading = true;
-	private List<CategoryDto> _incomeCategories = new();
-	private List<CategoryDto> _expenseCategories = new();
+    private bool _isLoading = true;
+    private List<CategoryDto> _incomeCategories = new();
+    private List<CategoryDto> _expenseCategories = new();
 
-	protected override async Task OnInitializedAsync()
-	{
-		await LoadCategories();
-	}
+    private ConfirmDialog? _confirmDialog;
+    private CategoryDto? _pendingDelete;
+    private string _confirmMessage = string.Empty;
 
-	private async Task LoadCategories()
-	{
-		_isLoading = true;
-		try
-		{
-			var result = await CategoryService.GetAllAsync();
-			if (result.IsSuccess && result.Data != null)
-			{
-				_incomeCategories = result.Data.Where(c => c.Type == "Income").ToList();
-				_expenseCategories = result.Data.Where(c => c.Type == "Expense").ToList();
-			}
-			else
-			{
-				Toast.ShowError(result.Message ?? "Failed to load categories.");
-			}
-		}
-		catch (Exception ex)
-		{
-			Toast.ShowError($"Error: {ex.Message}");
-		}
-		finally
-		{
-			_isLoading = false;
-		}
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+    }
 
-	private async Task DeleteCategory(CategoryDto cat)
-	{
-		try
-		{
-			var result = await CategoryService.DeleteAsync(cat.Id);
-			if (result.IsSuccess)
-			{
-				Toast.ShowSuccess($"Category '{cat.Name}' deleted.");
-				await LoadCategories();
-			}
-			else
-			{
-				Toast.ShowError(result.Message ?? "Delete failed.");
-			}
-		}
-		catch (Exception ex)
-		{
-			Toast.ShowError($"Error: {ex.Message}");
-		}
-	}
+    private async Task LoadCategories()
+    {
+        _isLoading = true;
+        try
+        {
+            var result = await CategoryService.GetAllAsync();
+            if (result.IsSuccess && result.Data != null)
+            {
+                _incomeCategories  = result.Data.Where(c => c.Type == "Income").ToList();
+                _expenseCategories = result.Data.Where(c => c.Type == "Expense").ToList();
+            }
+            else
+            {
+                Toast.ShowError(result.Message ?? "Failed to load categories.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void ConfirmDelete(CategoryDto cat)
+    {
+        _pendingDelete = cat;
+        _confirmMessage = $"Delete category \"{cat.Name}\"? Any transactions using this category will be affected.";
+        _confirmDialog?.Show();
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (_pendingDelete is null) return;
+        try
+        {
+            var result = await CategoryService.DeleteAsync(_pendingDelete.Id);
+            if (result.IsSuccess)
+            {
+                Toast.ShowSuccess($"Category '{_pendingDelete.Name}' deleted.");
+                await LoadCategories();
+            }
+            else
+            {
+                Toast.ShowError(result.Message ?? "Delete failed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _pendingDelete = null;
+        }
+    }
 }

@@ -1,9 +1,8 @@
-﻿@page "/"
+@page "/"
 @attribute [Authorize]
-@inject IAccountService AccountService
-@inject ITransactionService TransactionService
-@inject IBudgetService BudgetService
+@inject IDashboardService DashboardService
 @inject ToastService Toast
+@inject IJSRuntime JS
 
 <PageTitle>Dashboard — PFM</PageTitle>
 
@@ -11,79 +10,89 @@
 {
     <LoadingSpinner Message="Loading dashboard..." />
 }
+else if (_data == null)
+{
+    <div class="text-center py-5">
+        <i class="bi bi-exclamation-circle display-1 text-warning"></i>
+        <h5 class="mt-3 text-muted">Could not load dashboard</h5>
+        <button class="btn btn-primary mt-2" @onclick="LoadData">Retry</button>
+    </div>
+}
 else
 {
     <!-- Summary Cards -->
     <div class="row g-4 mb-4">
-	    <div class="col-md-3">
-		    <div class="card border-0 shadow-sm h-100">
-			    <div class="card-body">
-				    <div class="d-flex justify-content-between">
-					    <div>
-						    <p class="text-muted small mb-1">Total Balance</p>
-						    <h3 class="fw-bold text-primary">
-							    <CurrencyDisplay Amount="@_totalBalance" />
-						    </h3>
-					    </div>
-					    <div class="bg-primary bg-opacity-10 rounded-3 p-3">
-						    <i class="bi bi-wallet2 fs-3 text-primary"></i>
-					    </div>
-				    </div>
-			    </div>
-		    </div>
-	    </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted small mb-1">Total Balance</p>
+                            <h3 class="fw-bold text-primary">
+                                <CurrencyDisplay Amount="@_data.TotalBalance" />
+                            </h3>
+                        </div>
+                        <div class="bg-primary bg-opacity-10 rounded-3 p-3">
+                            <i class="bi bi-wallet2 fs-3 text-primary"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-	    <div class="col-md-3">
-		    <div class="card border-0 shadow-sm h-100">
-			    <div class="card-body">
-				    <div class="d-flex justify-content-between">
-					    <div>
-						    <p class="text-muted small mb-1">Monthly Income</p>
-						    <h3 class="fw-bold text-success">
-							    <CurrencyDisplay Amount="@_monthlyIncome" />
-						    </h3>
-					    </div>
-					    <div class="bg-success bg-opacity-10 rounded-3 p-3">
-						    <i class="bi bi-arrow-down-circle fs-3 text-success"></i>
-					    </div>
-				    </div>
-			    </div>
-		    </div>
-	    </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted small mb-1">Monthly Income</p>
+                            <h3 class="fw-bold text-success">
+                                <CurrencyDisplay Amount="@_data.MonthlyIncome" />
+                            </h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 rounded-3 p-3">
+                            <i class="bi bi-arrow-down-circle fs-3 text-success"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-	    <div class="col-md-3">
-		    <div class="card border-0 shadow-sm h-100">
-			    <div class="card-body">
-				    <div class="d-flex justify-content-between">
-					    <div>
-						    <p class="text-muted small mb-1">Monthly Expenses</p>
-						    <h3 class="fw-bold text-danger">
-							    <CurrencyDisplay Amount="@_monthlyExpenses" />
-						    </h3>
-					    </div>
-					    <div class="bg-danger bg-opacity-10 rounded-3 p-3">
-						    <i class="bi bi-arrow-up-circle fs-3 text-danger"></i>
-					    </div>
-				    </div>
-			    </div>
-		    </div>
-	    </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted small mb-1">Monthly Expenses</p>
+                            <h3 class="fw-bold text-danger">
+                                <CurrencyDisplay Amount="@_data.MonthlyExpenses" />
+                            </h3>
+                        </div>
+                        <div class="bg-danger bg-opacity-10 rounded-3 p-3">
+                            <i class="bi bi-arrow-up-circle fs-3 text-danger"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-	    <div class="col-md-3">
-		    <div class="card border-0 shadow-sm h-100">
-			    <div class="card-body">
-				    <div class="d-flex justify-content-between">
-					    <div>
-						    <p class="text-muted small mb-1">Accounts</p>
-						    <h3 class="fw-bold text-info">@_accounts.Count</h3>
-					    </div>
-					    <div class="bg-info bg-opacity-10 rounded-3 p-3">
-						    <i class="bi bi-bank fs-3 text-info"></i>
-					    </div>
-				    </div>
-			    </div>
-		    </div>
-	    </div>
+        <div class="col-md-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <p class="text-muted small mb-1">Monthly Savings</p>
+                            <h3 class="fw-bold @(_data.MonthlySavings >= 0 ? "text-info" : "text-warning")">
+                                <CurrencyDisplay Amount="@_data.MonthlySavings" />
+                            </h3>
+                        </div>
+                        <div class="bg-info bg-opacity-10 rounded-3 p-3">
+                            <i class="bi bi-piggy-bank fs-3 text-info"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-4">
@@ -95,10 +104,10 @@ else
                     <a href="/accounts" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body p-0">
-                    @if (_accounts.Any())
+                    @if (_data.Accounts.Any())
                     {
                         <div class="list-group list-group-flush">
-                            @foreach (var account in _accounts.Take(5))
+                            @foreach (var account in _data.Accounts.Take(5))
                             {
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
@@ -107,8 +116,8 @@ else
                                         <small class="text-muted ms-2">@account.Type</small>
                                     </div>
                                     <CurrencyDisplay Amount="@account.Balance"
-                                                        Currency="@account.Currency"
-                                                        CssClass="@(account.Balance >= 0 ? "fw-bold text-success" : "fw-bold text-danger")" />
+                                                     Currency="@account.Currency"
+                                                     CssClass="@(account.Balance >= 0 ? "fw-bold text-success" : "fw-bold text-danger")" />
                                 </div>
                             }
                         </div>
@@ -133,10 +142,10 @@ else
                     <a href="/transactions" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body p-0">
-                    @if (_recentTransactions.Any())
+                    @if (_data.RecentTransactions.Any())
                     {
                         <div class="list-group list-group-flush">
-                            @foreach (var txn in _recentTransactions.Take(7))
+                            @foreach (var txn in _data.RecentTransactions)
                             {
                                 <div class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
@@ -167,6 +176,44 @@ else
         </div>
     </div>
 
+    <!-- Charts Row -->
+    <div class="row g-4 mt-1">
+        <!-- Spending by Category (Doughnut) -->
+        <div class="col-md-5">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Spending by Category</h6>
+                </div>
+                <div class="card-body">
+                    @if (_data.SpendingByCategory.Any())
+                    {
+                        <div style="height: 260px;">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-center py-4 text-muted">No spending data this month</div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Income vs Expenses (Bar) -->
+        <div class="col-md-7">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-white">
+                    <h6 class="mb-0"><i class="bi bi-bar-chart me-2"></i>Income vs Expenses</h6>
+                </div>
+                <div class="card-body">
+                    <div style="height: 260px;">
+                        <canvas id="incomeExpenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Budget Progress -->
     <div class="row g-4 mt-1">
         <div class="col-12">
@@ -176,10 +223,10 @@ else
                     <a href="/budgets" class="btn btn-sm btn-outline-primary">View All</a>
                 </div>
                 <div class="card-body">
-                    @if (_budgets.Any())
+                    @if (_data.ActiveBudgets.Any())
                     {
                         <div class="row g-3">
-                            @foreach (var budget in _budgets.Take(4))
+                            @foreach (var budget in _data.ActiveBudgets.Take(4))
                             {
                                 <div class="col-md-6">
                                     <div class="border rounded p-3">
@@ -191,7 +238,8 @@ else
                                         </div>
                                         <div class="progress mb-2" style="height: 8px;">
                                             <div class="progress-bar @(budget.IsExceeded ? "bg-danger" : budget.PercentageUsed > 80 ? "bg-warning" : "bg-success")"
-                                                 style="width: @Math.Min(budget.PercentageUsed, 100)%"></div>
+                                                 style="width: @Math.Min(budget.PercentageUsed, 100)%">
+                                            </div>
                                         </div>
                                         <div class="d-flex justify-content-between">
                                             <small class="text-muted">
@@ -221,50 +269,37 @@ else
 
 @code {
     private bool _isLoading = true;
-    private List<AccountDto> _accounts = new();
-    private List<TransactionDto> _recentTransactions = new();
-    private List<BudgetDto> _budgets = new();
-    private decimal _totalBalance;
-    private decimal _monthlyIncome;
-    private decimal _monthlyExpenses;
+    private DashboardDto? _data;
+
+    // Default category colours for chart when no colour is stored on the category.
+    private static readonly string[] DefaultColours =
+    [
+        "#4e79a7", "#f28e2b", "#e15759", "#76b7b2",
+        "#59a14f", "#edc948", "#b07aa1", "#ff9da7",
+        "#9c755f", "#bab0ac"
+    ];
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (_data != null)
+            await RenderCharts();
+    }
+
+    private async Task LoadData()
+    {
+        _isLoading = true;
         try
         {
-            var accountsTask = AccountService.GetAllAsync();
-            var transactionsTask = TransactionService.GetRecentAsync(7);
-            var budgetsTask = BudgetService.GetActiveAsync();
-
-            await Task.WhenAll(accountsTask, transactionsTask, budgetsTask);
-
-            var accountsResult = accountsTask.Result;
-            var transactionsResult = transactionsTask.Result;
-            var budgetsResult = budgetsTask.Result;
-
-            if (accountsResult.IsSuccess && accountsResult.Data != null)
-            {
-                _accounts = accountsResult.Data;
-                _totalBalance = _accounts.Where(a => a.IsActive).Sum(a => a.Balance);
-            }
-
-            if (transactionsResult.IsSuccess && transactionsResult.Data != null)
-            {
-                _recentTransactions = transactionsResult.Data;
-
-                var thisMonth = _recentTransactions
-                    .Where(t => t.TransactionDate.Month == DateTime.Now.Month
-                             && t.TransactionDate.Year == DateTime.Now.Year)
-                    .ToList();
-
-                _monthlyIncome = thisMonth.Where(t => t.Type == "Income").Sum(t => t.Amount);
-                _monthlyExpenses = thisMonth.Where(t => t.Type == "Expense").Sum(t => t.Amount);
-            }
-
-            if (budgetsResult.IsSuccess && budgetsResult.Data != null)
-            {
-                _budgets = budgetsResult.Data;
-            }
+            var result = await DashboardService.GetAsync();
+            if (result.IsSuccess)
+                _data = result.Data;
+            else
+                Toast.ShowError(result.Message ?? "Failed to load dashboard.");
         }
         catch (Exception ex)
         {
@@ -276,32 +311,55 @@ else
         }
     }
 
-    private string GetAccountIcon(string type) => type switch
+    private async Task RenderCharts()
     {
-        "Checking" => "bi-credit-card",
-        "Savings" => "bi-safe",
-        "Cash" => "bi-cash-stack",
+        if (_data == null) return;
+
+        // ── Spending by Category doughnut ─────────────────
+        if (_data.SpendingByCategory.Any())
+        {
+            var labels  = _data.SpendingByCategory.Select(c => c.CategoryName).ToArray();
+            var data    = _data.SpendingByCategory.Select(c => (double)c.Percentage).ToArray();
+            var colours = _data.SpendingByCategory
+                .Select((c, i) => string.IsNullOrEmpty(c.Colour) ? DefaultColours[i % DefaultColours.Length] : c.Colour)
+                .ToArray();
+
+            await JS.InvokeVoidAsync("chartHelper.renderDoughnut", "categoryChart", labels, data, colours);
+        }
+
+        // ── Income vs Expenses bar — current month only ───
+        // Build a simple single-month summary from the server-computed figures.
+        var monthLabel  = new[] { DateTime.Now.ToString("MMMM yyyy") };
+        var incomeData  = new[] { (double)_data.MonthlyIncome };
+        var expenseData = new[] { (double)_data.MonthlyExpenses };
+        await JS.InvokeVoidAsync("chartHelper.renderIncomeExpenseBar", "incomeExpenseChart", monthLabel, incomeData, expenseData);
+    }
+
+    // ── Icon helpers ──────────────────────────────────────
+    private static string GetAccountIcon(string type) => type switch
+    {
+        "Checking"   => "bi-credit-card",
+        "Savings"    => "bi-safe",
+        "Cash"       => "bi-cash-stack",
         "CreditCard" => "bi-credit-card-2-front",
-        "Loan" => "bi-file-earmark-text",
+        "Loan"       => "bi-file-earmark-text",
         "Investment" => "bi-graph-up-arrow",
-        _ => "bi-bank"
+        _            => "bi-bank"
     };
 
-    private string GetTransactionIcon(string type) => type switch
+    private static string GetTransactionIcon(string type) => type switch
     {
-        "Income" => "bi-arrow-down-circle-fill",
-        "Expense" => "bi-arrow-up-circle-fill",
+        "Income"   => "bi-arrow-down-circle-fill",
+        "Expense"  => "bi-arrow-up-circle-fill",
         "Transfer" => "bi-arrow-left-right",
-        _ => "bi-circle"
+        _          => "bi-circle"
     };
 
-    private string GetTransactionIconColor(string type) => type switch
+    private static string GetTransactionIconColor(string type) => type switch
     {
-        "Income" => "text-success",
-        "Expense" => "text-danger",
+        "Income"   => "text-success",
+        "Expense"  => "text-danger",
         "Transfer" => "text-info",
-        _ => "text-muted"
+        _          => "text-muted"
     };
 }
-
-

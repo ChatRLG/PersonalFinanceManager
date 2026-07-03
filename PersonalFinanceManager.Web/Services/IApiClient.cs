@@ -9,5 +9,6 @@ public interface IApiClient
 	Task<ApiResult> PostAsync<TRequest>(string url, TRequest data);
 	Task<ApiResult> PutAsync(string url);
 	Task<ApiResult> PutAsync<TRequest>(string url, TRequest data);
+	Task<ApiResult<TResponse>> PutAsync<TRequest, TResponse>(string url, TRequest data);
 	Task<ApiResult> DeleteAsync(string url);
 }

@@ -14,8 +14,8 @@
 | 0 — Stabilize foundation | ✅ Completed 2026-06-24 |
 | 1 — Application layer + custom JWT auth | ✅ Completed 2026-06-24 |
 | 2 — API domain controllers | ✅ Completed 2026-07-03 |
-| 3 — Web end-to-end | ⏳ Next |
-| 4 — Tests + CI | ⬜ Pending |
+| 3 — Web end-to-end | ✅ Completed 2026-07-03 |
+| 4 — Tests + CI | ⏳ Next |
 | 5 — Desktop (WPF) + sync | ⬜ Pending |
 | 6+ — Full suite | ⬜ Planned |
 
@@ -153,7 +153,14 @@ Dependency rule: every arrow points inward toward Core. The API depends on Appli
 - [ ] Clean out template scaffolding (`WeatherForecast*`, `Counter.razor`, `FetchData.razor`, duplicate layouts under `Shared/` vs `Components/Layout/`).
 
 **Acceptance:** register → log in → create account → add categories → record income/expense/transfer → see balances and budget progress update → dashboard charts render. End-to-end, no console errors.
-**Resources:** Blazor — https://learn.microsoft.com/aspnet/core/blazor/ · Chart.js — https://www.chartjs.org/docs/latest/
+**Completion note (2026-07-03):** Web project builds cleanly (0 errors). Key changes:
+- Added `IDashboardService`/`DashboardService` calling `GET /api/dashboard`; Dashboard.razor now uses the single API endpoint instead of three parallel calls. Monthly income/expense comes from the server-computed `DashboardDto`.
+- Added `PagedResultDto<T>` model; `ITransactionService.GetPagedAsync` replaces `GetAllAsync`; `TransactionList.razor` uses server-side pagination via `Pagination.razor` component and confirms deletes with `ConfirmDialog`.
+- `BudgetList.razor` and `CategoryList.razor` now confirm destructive deletes with `ConfirmDialog` (previously immediate on click).
+- Chart.js 4.4.2 added to `_Layout.cshtml`; `app.js` extended with `chartHelper.renderDoughnut` (spending by category) and `renderIncomeExpenseBar` (income vs expenses); Dashboard.razor renders both via `IJSRuntime.InvokeVoidAsync`.
+- Created `Pages/Reports.razor` (fixes broken `/reports` nav link) — full summary: KPI cards, both charts, recent transaction table, account balances.
+- Fixed `MainLayout.razor` `ToastContainer` fully-qualified name → bare `<ToastContainer />` (import already in `_Imports.razor`).
+- Deleted dead `Models/ApiResponse.cs`.
 
 ---
 

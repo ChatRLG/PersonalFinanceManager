@@ -40,4 +40,9 @@ public class AccountService : IAccountService
 	{
 		return await _api.PutAsync($"api/accounts/{id}/activate");
 	}
+
+	public async Task<ApiResult<AccountDto>> UpdateAsync(Guid id, UpdateAccountModel model)
+	{
+		return await _api.PutAsync<UpdateAccountModel, AccountDto>($"api/accounts/{id}", model);
+	}
 }

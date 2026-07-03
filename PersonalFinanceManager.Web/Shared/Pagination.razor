@@ -10,10 +10,10 @@
 
 			@for (var i = StartPage; i <= EndPage; i++)
 			{
-				var page = i;
-				<li class="page-item @(page == CurrentPage ? "active" : "")">
-					<button class="page-link" @onclick="() => OnPageChanged.InvokeAsync(page)">
-						@page
+				var pageNum = i;
+				<li class="page-item @(pageNum == CurrentPage ? "active" : "")">
+					<button class="page-link" @onclick="() => OnPageChanged.InvokeAsync(pageNum)">
+						@pageNum
 					</button>
 				</li>
 			}

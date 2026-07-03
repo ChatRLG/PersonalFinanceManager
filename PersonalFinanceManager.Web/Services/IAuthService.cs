@@ -4,7 +4,7 @@ namespace PersonalFinanceManager.Web.Services;
 
 public interface IAuthService
 {
-	Task<ApiResponse<AuthResponseModel>> LoginAsync(LoginModel model);
-	Task<ApiResponse<AuthResponseModel>> RegisterAsync(RegisterModel model);
+	Task<ApiResult<AuthResponseModel>> LoginAsync(LoginModel model);
+	Task<ApiResult<AuthResponseModel>> RegisterAsync(RegisterModel model);
 	Task LogoutAsync();
 }

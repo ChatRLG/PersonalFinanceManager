@@ -115,6 +115,27 @@ public class ApiClient : IApiClient
 		}
 	}
 
+	public async Task<ApiResult<TResponse>> PutAsync<TRequest, TResponse>(string url, TRequest data)
+	{
+		try
+		{
+			var response = await _http.PutAsJsonAsync(url, data);
+			if (response.IsSuccessStatusCode)
+			{
+				var result = await response.Content.ReadFromJsonAsync<TResponse>();
+				return ApiResult<TResponse>.Success(result!);
+			}
+			var error = await response.Content.ReadAsStringAsync();
+			_logger.LogWarning("PUT {Url} failed: {Status} — {Error}", url, response.StatusCode, error);
+			return ApiResult<TResponse>.Failure(error);
+		}
+		catch (Exception ex)
+		{
+			_logger.LogError(ex, "PUT {Url} exception", url);
+			return ApiResult<TResponse>.Failure(ex.Message);
+		}
+	}
+
 	public async Task<ApiResult> DeleteAsync(string url)
 	{
 		try

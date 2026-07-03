@@ -4,11 +4,11 @@ namespace PersonalFinanceManager.Web.Services;
 
 public interface IAccountService
 {
-	Task<ApiResponse<List<AccountDto>>> GetAllAsync();
-	Task<ApiResponse<AccountDto>> GetByIdAsync(Guid id);
-	Task<ApiResponse<AccountDto>> CreateAsync(CreateAccountModel model);
-	Task<ApiResponse<AccountDto>> UpdateAsync(Guid id, UpdateAccountModel model);
-	Task<ApiResponse> DeactivateAsync(Guid id);
-	Task<ApiResponse> ActivateAsync(Guid id);
-	Task<ApiResponse> DeleteAsync(Guid id);
+	Task<ApiResult<List<AccountDto>>> GetAllAsync();
+	Task<ApiResult<AccountDto>> GetByIdAsync(Guid id);
+	Task<ApiResult<AccountDto>> CreateAsync(CreateAccountModel model);
+	Task<ApiResult<AccountDto>> UpdateAsync(Guid id, UpdateAccountModel model);
+	Task<ApiResult> DeactivateAsync(Guid id);
+	Task<ApiResult> ActivateAsync(Guid id);
+	Task<ApiResult> DeleteAsync(Guid id);
 }

@@ -95,7 +95,7 @@ else
 
                         <div class="d-flex gap-2">
                             <button class="btn btn-sm btn-outline-danger flex-fill"
-                                    @onclick="() => DeleteBudget(budget)">
+                                    @onclick="() => ConfirmDelete(budget)">
                                 <i class="bi bi-trash me-1"></i>Delete
                             </button>
                         </div>
@@ -106,67 +106,84 @@ else
     </div>
 }
 
+<ConfirmDialog @ref="_confirmDialog"
+               Title="Delete Budget"
+               Message="@_confirmMessage"
+               ConfirmText="Delete"
+               OnConfirmed="ExecuteDelete" />
+
 @code {
-	private bool _isLoading = true;
-	private List<BudgetDto> _budgets = new();
+    private bool _isLoading = true;
+    private List<BudgetDto> _budgets = new();
 
-	protected override async Task OnInitializedAsync()
-	{
-		await LoadBudgets();
-	}
+    private ConfirmDialog? _confirmDialog;
+    private BudgetDto? _pendingDelete;
+    private string _confirmMessage = string.Empty;
 
-	private async Task LoadBudgets()
-	{
-		_isLoading = true;
-		try
-		{
-			var result = await BudgetService.GetAllAsync();
-			if (result.IsSuccess && result.Data != null)
-			{
-				_budgets = result.Data;
-			}
-			else
-			{
-				Toast.ShowError(result.Message ?? "Failed to load budgets.");
-			}
-		}
-		catch (Exception ex)
-		{
-			Toast.ShowError($"Error: {ex.Message}");
-		}
-		finally
-		{
-			_isLoading = false;
-		}
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadBudgets();
+    }
 
-	private async Task DeleteBudget(BudgetDto budget)
-	{
-		try
-		{
-			var result = await BudgetService.DeleteAsync(budget.Id);
-			if (result.IsSuccess)
-			{
-				Toast.ShowSuccess($"Budget '{budget.Name}' deleted.");
-				await LoadBudgets();
-			}
-			else
-			{
-				Toast.ShowError(result.Message ?? "Delete failed.");
-			}
-		}
-		catch (Exception ex)
-		{
-			Toast.ShowError($"Error: {ex.Message}");
-		}
-	}
+    private async Task LoadBudgets()
+    {
+        _isLoading = true;
+        try
+        {
+            var result = await BudgetService.GetAllAsync();
+            if (result.IsSuccess && result.Data != null)
+                _budgets = result.Data;
+            else
+                Toast.ShowError(result.Message ?? "Failed to load budgets.");
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
 
-	private string GetProgressBarClass(BudgetDto budget)
-	{
-		if (budget.IsExceeded) return "bg-danger";
-		if (budget.PercentageUsed > 80) return "bg-warning";
-		if (budget.PercentageUsed > 50) return "bg-info";
-		return "bg-success";
-	}
+    private void ConfirmDelete(BudgetDto budget)
+    {
+        _pendingDelete = budget;
+        _confirmMessage = $"Delete budget \"{budget.Name}\"? This cannot be undone.";
+        _confirmDialog?.Show();
+    }
+
+    private async Task ExecuteDelete()
+    {
+        if (_pendingDelete is null) return;
+        try
+        {
+            var result = await BudgetService.DeleteAsync(_pendingDelete.Id);
+            if (result.IsSuccess)
+            {
+                Toast.ShowSuccess($"Budget '{_pendingDelete.Name}' deleted.");
+                await LoadBudgets();
+            }
+            else
+            {
+                Toast.ShowError(result.Message ?? "Delete failed.");
+            }
+        }
+        catch (Exception ex)
+        {
+            Toast.ShowError($"Error: {ex.Message}");
+        }
+        finally
+        {
+            _pendingDelete = null;
+        }
+    }
+
+    private string GetProgressBarClass(BudgetDto budget)
+    {
+        if (budget.IsExceeded) return "bg-danger";
+        if (budget.PercentageUsed > 80) return "bg-warning";
+        if (budget.PercentageUsed > 50) return "bg-info";
+        return "bg-success";
+    }
 }
-
