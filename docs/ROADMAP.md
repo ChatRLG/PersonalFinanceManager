@@ -15,8 +15,8 @@
 | 1 — Application layer + custom JWT auth | ✅ Completed 2026-06-24 |
 | 2 — API domain controllers | ✅ Completed 2026-07-03 |
 | 3 — Web end-to-end | ✅ Completed 2026-07-03 |
-| 4 — Tests + CI | ⏳ Next |
-| 5 — Desktop (WPF) + sync | ⬜ Pending |
+| 4 — Tests + CI | ✅ Completed 2026-07-03 |
+| 5 — Desktop (WPF) + sync | ⏳ Next |
 | 6+ — Full suite | ⬜ Planned |
 
 > This file is kept up to date as each phase completes and is committed to the repo.
@@ -172,6 +172,12 @@ Dependency rule: every arrow points inward toward Core. The API depends on Appli
 - [ ] GitHub Actions workflow: restore → build → test on push/PR.
 
 **Acceptance:** `dotnet test` green locally and in CI; transactional consistency covered by tests.
+**Completion note (2026-07-03):** 132 tests all green (122 unit + 10 integration).
+- `PersonalFinanceManager.UnitTests`: 101 domain tests (Account, Budget, User, Transaction, BaseEntity, Money, DateRange) + 21 Application service tests (Auth, Account, Budget, TransactionAppService) using Moq for all repository/UoW dependencies.
+- `PersonalFinanceManager.IntegrationTests`: EF SQLite in-memory via `CustomWebApplicationFactory` (abstract base with per-class concrete subclasses for isolated databases); JWT settings injected via `builder.UseSetting()`; tests cover auth flow (4), transactional consistency (4), and cross-user ownership enforcement (2).
+- `Program.cs` modified: `public partial class Program { }` added for `WebApplicationFactory<Program>`; `MigrateDatabaseAsync` guarded with `if (!app.Environment.IsEnvironment("Testing"))`.
+- `.github/workflows/ci.yml` created: push/PR to main triggers restore → build (Release) → unit test → integration test.
+- Feed-constrained package versions used: `Microsoft.NET.Test.Sdk` 17.10.0, `Moq` 4.20.70, `xunit` 2.9.2, `FluentAssertions` 6.12.0, `Microsoft.EntityFrameworkCore.Sqlite` 8.0.5, `Microsoft.AspNetCore.Mvc.Testing` 8.0.7.
 **Resources:** Unit testing .NET — https://learn.microsoft.com/dotnet/core/testing/ · Integration tests — https://learn.microsoft.com/aspnet/core/test/integration-tests
 
 ---
