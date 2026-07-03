@@ -1,0 +1,30 @@
+﻿@inherits LayoutComponentBase
+@inject PersonalFinanceManager.Web.Services.ToastService ToastService
+
+<div class="d-flex">
+	<!-- Sidebar -->
+	<div style="width: 250px; min-height: 100vh;" class="flex-shrink-0">
+		<NavMenu />
+	</div>
+
+	<!-- Main Content -->
+	<div class="flex-grow-1 bg-light">
+		<!-- Top Bar -->
+		<header class="bg-white shadow-sm px-4 py-3 d-flex justify-content-between align-items-center">
+			<h5 class="mb-0 text-muted">
+				<i class="bi bi-wallet2 me-2"></i>Personal Finance Manager
+			</h5>
+			<div class="text-muted small">
+				<i class="bi bi-calendar3 me-1"></i>@DateTime.Now.ToString("dddd, MMMM dd, yyyy")
+			</div>
+		</header>
+
+		<!-- Page Content -->
+		<main class="p-4">
+			@Body
+		</main>
+	</div>
+</div>
+
+<!-- Toast Notifications -->
+<ToastContainer />

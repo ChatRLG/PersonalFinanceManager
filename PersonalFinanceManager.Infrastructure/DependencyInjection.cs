@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PersonalFinanceManager.Core.Interfaces;
+using PersonalFinanceManager.Infrastructure.Auth;
 using PersonalFinanceManager.Infrastructure.Data;
 using PersonalFinanceManager.Infrastructure.Repositories;
 
@@ -50,6 +51,11 @@ public static class DependencyInjection
 
 		// ──────────── Unit of Work ────────────
 		services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+		// ──────────── Authentication services ────────────
+		services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+		services.AddSingleton<IPasswordHasher, Pbkdf2PasswordHasher>();
+		services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
 
 		return services;
 	}

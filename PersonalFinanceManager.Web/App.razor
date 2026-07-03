@@ -1,0 +1,30 @@
+﻿<CascadingAuthenticationState>
+	<Router AppAssembly="@typeof(App).Assembly">
+		<Found Context="routeData">
+			<AuthorizeRouteView RouteData="@routeData"
+			                    DefaultLayout="@typeof(Components.Layout.MainLayout)">
+				<NotAuthorized>
+					@if (context.User.Identity?.IsAuthenticated != true)
+					{
+						<RedirectToLogin />
+					}
+					else
+					{
+						<p class="text-danger">You are not authorized to access this resource.</p>
+					}
+				</NotAuthorized>
+			</AuthorizeRouteView>
+			<FocusOnNavigate RouteData="@routeData" Selector="h1" />
+		</Found>
+		<NotFound>
+			<PageTitle>Not Found</PageTitle>
+			<LayoutView Layout="@typeof(Components.Layout.MainLayout)">
+				<div class="text-center py-5">
+					<h1 class="display-1 text-muted">404</h1>
+					<p class="lead">Page not found</p>
+					<a href="/" class="btn btn-primary">Return to Dashboard</a>
+				</div>
+			</LayoutView>
+		</NotFound>
+	</Router>
+</CascadingAuthenticationState>

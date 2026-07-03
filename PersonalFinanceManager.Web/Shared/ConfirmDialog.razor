@@ -1,0 +1,133 @@
+﻿@* <div class="modal fade @(_isVisible ? "show d-block" : "")"
+     tabindex="-1"
+     style="background-color: rgba(0,0,0,0.5);"
+     @onclick="OnCancel">
+
+	<div class="modal-dialog modal-dialog-centered" @onclick:stopPropagation="true">
+		<div class="modal-content">
+			<div class="modal-header bg-warning text-dark">
+				<h5 class="modal-title">
+					<i class="bi bi-exclamation-triangle me-2"></i>@Title
+				</h5>
+				<button type="button" class="btn-close" @onclick="OnCancel"></button>
+			</div>
+			<div class="modal-body">
+				<p>@Message</p>
+			</div>
+			<div class="modal-footer">
+				<button class="btn btn-secondary" @onclick="OnCancel">Cancel</button>
+				<button class="btn btn-danger" @onclick="OnConfirm">
+					<i class="bi bi-check-lg me-1"></i>Confirm
+				</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+@code {
+	private bool _isVisible;
+
+	[Parameter] public string Title { get; set; } = "Confirm Action";
+	[Parameter] public string Message { get; set; } = "Are you sure?";
+	[Parameter] public EventCallback OnConfirmed { get; set; }
+	[Parameter] public EventCallback OnCancelled { get; set; }
+
+	public void Show() { _isVisible = true; StateHasChanged(); }
+	public void Hide() { _isVisible = false; StateHasChanged(); }
+
+	private async Task OnConfirm()
+	{
+		_isVisible = false;
+		await OnConfirmed.InvokeAsync();
+	}
+
+	private async Task OnCancel()
+	{
+		_isVisible = false;
+		await OnCancelled.InvokeAsync();
+	}
+} *@
+
+	
+
+@if (_isVisible)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>@Title
+                    </h5>
+                    <button type="button" class="btn-close" @onclick="Cancel"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="mb-0">@Message</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" @onclick="Cancel">
+                        <i class="bi bi-x-lg me-1"></i>@CancelText
+                    </button>
+                    <button type="button" class="btn btn-danger" @onclick="Confirm" disabled="@_isProcessing">
+                        @if (_isProcessing)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2"></span>
+                        }
+                        <i class="bi bi-check-lg me-1"></i>@ConfirmText
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isVisible;
+    private bool _isProcessing;
+
+    [Parameter] public string Title { get; set; } = "Confirm";
+    [Parameter] public string Message { get; set; } = "Are you sure?";
+    [Parameter] public string ConfirmText { get; set; } = "Confirm";
+    [Parameter] public string CancelText { get; set; } = "Cancel";
+    [Parameter] public EventCallback OnConfirmed { get; set; }
+    [Parameter] public EventCallback OnCancelled { get; set; }
+
+    public void Show()
+    {
+        _isVisible = true;
+        _isProcessing = false;
+        StateHasChanged();
+    }
+
+    public void Hide()
+    {
+        _isVisible = false;
+        _isProcessing = false;
+        StateHasChanged();
+    }
+
+    private async Task Confirm()
+    {
+        _isProcessing = true;
+        StateHasChanged();
+
+        try
+        {
+            await OnConfirmed.InvokeAsync();
+        }
+        finally
+        {
+            _isVisible = false;
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task Cancel()
+    {
+        _isVisible = false;
+        _isProcessing = false;
+        await OnCancelled.InvokeAsync();
+        StateHasChanged();
+    }
+}

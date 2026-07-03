@@ -5,15 +5,21 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="7.0.18">
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.7">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+    <!-- Pin to resolve a transitive downgrade pulled in by EFCore.Design's Roslyn dependency (NU1605). -->
+    <PackageReference Include="System.Collections.Immutable" Version="8.0.0" />
+    <!-- JWT bearer authentication. 6.0.8 is the highest available in the configured feed;
+         compatible with net8 and the Infrastructure token generator (IdentityModel 6.x). -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="6.0.8" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\PersonalFinanceManager.Infrastructure\PersonalFinanceManager.Infrastructure.csproj" />
+    <ProjectReference Include="..\PersonalFinanceManager.Application\PersonalFinanceManager.Application.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

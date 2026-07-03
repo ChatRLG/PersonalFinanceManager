@@ -21,6 +21,11 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.10" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.10" />
+    <!-- JWT issuance. Pinned to the 6.x IdentityModel stack to match the API's
+         JwtBearer 6.0.8 (highest available in the configured feed). -->
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.35.0" />
+    <!-- Provides services.Configure<T>(IConfiguration) for binding JwtSettings. -->
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="8.0.0" />
   </ItemGroup>
   
   <ItemGroup>

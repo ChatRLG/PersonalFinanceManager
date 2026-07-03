@@ -53,6 +53,30 @@ public static class DatabaseInitializer
 	}
 
 	/// <summary>
+	/// Applies any pending EF Core migrations, creating the database if it does
+	/// not yet exist. This is the standard startup path — it never drops existing
+	/// data, unlike <see cref="ResetDatabaseAsync"/>.
+	/// </summary>
+	public static async Task MigrateDatabaseAsync(IServiceProvider serviceProvider)
+	{
+		using var scope = serviceProvider.CreateScope();
+		var context = scope.ServiceProvider.GetRequiredService<AppDBContext>();
+		var logger = scope.ServiceProvider.GetRequiredService<ILogger<AppDBContext>>();
+
+		try
+		{
+			logger.LogInformation("Applying database migrations...");
+			await context.Database.MigrateAsync();
+			logger.LogInformation("Database migrations applied successfully.");
+		}
+		catch (Exception ex)
+		{
+			logger.LogError(ex, "An error occurred while applying database migrations.");
+			throw;
+		}
+	}
+
+	/// <summary>
 	/// Generates the full CREATE TABLE SQL script from the current EF model.
 	/// Use this to produce a migration script for production deployments.
 	/// </summary>
