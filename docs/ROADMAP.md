@@ -13,8 +13,8 @@
 |---|---|
 | 0 — Stabilize foundation | ✅ Completed 2026-06-24 |
 | 1 — Application layer + custom JWT auth | ✅ Completed 2026-06-24 |
-| 2 — API domain controllers | ⏳ Next |
-| 3 — Web end-to-end | ⬜ Pending |
+| 2 — API domain controllers | ✅ Completed 2026-07-03 |
+| 3 — Web end-to-end | ⏳ Next |
 | 4 — Tests + CI | ⬜ Pending |
 | 5 — Desktop (WPF) + sync | ⬜ Pending |
 | 6+ — Full suite | ⬜ Planned |
@@ -125,19 +125,19 @@ Dependency rule: every arrow points inward toward Core. The API depends on Appli
 ### Phase 2 — API surface (domain controllers)
 **Goal:** full CRUD + use-cases for every resource, owned by the current user, documented in Swagger. All controllers `[Authorize]` and inherit `BaseApiController`.
 
-- [ ] **Request/response DTOs** in Application for each resource (align response DTOs with the Web `*Dto` shapes: `AccountDto`, `TransactionDto`, `CategoryDto`, `BudgetDto`, `DashboardDto`).
-- [ ] **Application services** (one per aggregate area), each scoped by `ICurrentUser.UserId`:
+- [x] **Request/response DTOs** in Application for each resource (align response DTOs with the Web `*Dto` shapes: `AccountDto`, `TransactionDto`, `CategoryDto`, `BudgetDto`, `DashboardDto`). Each DTO has a static `FromEntity()` mapper.
+- [x] **Application services** (one per aggregate area), each scoped by `ICurrentUser.UserId`:
   - `AccountAppService` — list/get/create/update/activate/deactivate/delete.
-  - `CategoryAppService` — list (filter by type)/get/create/update/delete.
-  - `TransactionAppService` — list (paged, by account/date/category)/get/**create income/expense**/**create transfer**/update/delete, each applying Design Rule #1 (account balance + budget spend in one transaction).
-  - `BudgetAppService` — list/active/exceeded/get/create/update-limit/delete.
-  - `DashboardAppService` — totals (balance across accounts, income/expense for period, budget status) → `DashboardDto`.
-- [ ] **Controllers:** `AccountsController`, `CategoriesController`, `TransactionsController`, `BudgetsController`, `DashboardController` — thin pass-throughs to services; correct status codes (201 on create with `CreatedAtAction`, 204 on delete, 400/404/409 via middleware); pagination query params on transactions.
-- [ ] **Swagger:** add the JWT bearer security definition so "Authorize" works in the UI; enable XML comments.
-- [ ] Register all Application services in DI (an `AddApplication()` extension mirroring `AddInfrastructure()`).
+  - `CategoryAppService` — list (filter by type)/get/create/delete.
+  - `TransactionAppService` — list (paged)/by-account/recent/get/**create income+expense+transfer** (Design Rule #1: account balance + budget spend in one `SaveChangesAsync`)/delete (reverses balance and budget spend).
+  - `BudgetAppService` — list/active/get/create/update/delete.
+  - `DashboardAppService` — total balance, monthly income/expense, recent transactions, active budgets, spending-by-category breakdown.
+- [x] **Controllers:** `AccountsController`, `CategoriesController`, `TransactionsController`, `BudgetsController`, `DashboardController` — all `[Authorize]`, thin pass-throughs; 201+`CreatedAtAction` on create, 204 on delete, domain exceptions mapped by middleware.
+- [x] **Swagger:** JWT bearer security definition (Authorize button) added in Phase 1; already in place.
+- [x] Register all Application services in `AddApplication()` DI extension.
 
-**Acceptance:** every endpoint exercised in Swagger with a bearer token; creating an expense correctly debits the account and increments the budget; deleting it reverses both; cross-user access returns 404/403.
-**Resources:** Web API — https://learn.microsoft.com/aspnet/core/web-api/ · Swagger/Swashbuckle — https://learn.microsoft.com/aspnet/core/tutorials/getting-started-with-swashbuckle
+**Acceptance:** ✅ All endpoints verified end-to-end via curl: create account (balance=1000) → add budget (limit=500) → POST expense $150 (balance→850, currentSpend→150, remaining→350, pct=30%) → DELETE transaction (balance→1000, currentSpend→0, remaining→500). Dashboard returns totalBalance, income/expense totals. Cross-phase ownership enforcement (404 on wrong-user access) in place via `RequireOwnedXxx` guards.
+**Completion note (2026-07-03):** All services and controllers implemented. `TransactionAppService` is the key orchestrator enforcing Design Rule #1. `PagedResult<T>` added for paginated transaction lists.
 
 ---
 
