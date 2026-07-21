@@ -113,7 +113,10 @@ var app = builder.Build();
 // Apply pending EF Core migrations (creates the DB on first run).
 // This preserves existing data. To wipe and recreate during development,
 // call DatabaseInitializer.ResetDatabaseAsync(app.Services) instead.
-await DatabaseInitializer.MigrateDatabaseAsync(app.Services);
+// Skip SQL Server migrations when running under the integration test host,
+// which uses EF SQLite + EnsureCreated() instead.
+if (!app.Environment.IsEnvironment("Testing"))
+    await DatabaseInitializer.MigrateDatabaseAsync(app.Services);
 
 
 // ──────────────── Middleware Pipeline ────────────────────
@@ -143,3 +146,6 @@ app.MapControllers();
 app.MapHealthChecks("/health");
 
 app.Run();
+
+// Required for WebApplicationFactory<Program> in integration tests.
+public partial class Program { }

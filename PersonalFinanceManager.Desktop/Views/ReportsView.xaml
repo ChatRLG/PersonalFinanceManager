@@ -1,0 +1,102 @@
+<UserControl x:Class="PersonalFinanceManager.Desktop.Views.ReportsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel>
+            <DockPanel Margin="0,0,0,20">
+                <TextBlock Text="Reports" FontSize="22" FontWeight="SemiBold" VerticalAlignment="Center"/>
+                <Button DockPanel.Dock="Right" Content="⬇ Export CSV"
+                        Command="{Binding ExportTransactionsCommand}"
+                        Style="{StaticResource PrimaryButton}" Height="32"/>
+            </DockPanel>
+
+            <TextBlock Text="{Binding ErrorMessage}" Foreground="{StaticResource DangerBrush}"
+                       FontSize="12" Margin="0,0,0,12"
+                       Visibility="{Binding ErrorMessage, Converter={StaticResource StringToVisConverter}}"/>
+
+            <!-- KPI row -->
+            <UniformGrid Columns="4" Margin="0,0,0,20">
+                <Border Style="{StaticResource KpiCard}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Total Balance" FontSize="12" Foreground="#6C757D"/>
+                        <TextBlock Text="{Binding TotalBalance, StringFormat=C}" FontSize="20"
+                                   FontWeight="Bold" Foreground="{StaticResource PrimaryBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCard}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Monthly Income" FontSize="12" Foreground="#6C757D"/>
+                        <TextBlock Text="{Binding MonthlyIncome, StringFormat=C}" FontSize="20"
+                                   FontWeight="Bold" Foreground="{StaticResource AccentBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCard}" Margin="0,0,12,0">
+                    <StackPanel>
+                        <TextBlock Text="Monthly Expenses" FontSize="12" Foreground="#6C757D"/>
+                        <TextBlock Text="{Binding MonthlyExpenses, StringFormat=C}" FontSize="20"
+                                   FontWeight="Bold" Foreground="{StaticResource DangerBrush}" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+                <Border Style="{StaticResource KpiCard}">
+                    <StackPanel>
+                        <TextBlock Text="Net Savings" FontSize="12" Foreground="#6C757D"/>
+                        <TextBlock Text="{Binding MonthlySavings, StringFormat=C}" FontSize="20"
+                                   FontWeight="Bold" Foreground="#495057" Margin="0,4,0,0"/>
+                    </StackPanel>
+                </Border>
+            </UniformGrid>
+
+            <!-- Spending by category -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Spending by Category" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <DataGrid ItemsSource="{Binding SpendingByCategory}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              CanUserAddRows="False" RowHeight="32" FontSize="12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Category" Binding="{Binding CategoryName}" Width="*"/>
+                            <DataGridTextColumn Header="Amount" Binding="{Binding Amount, StringFormat=C}" Width="120"/>
+                            <DataGridTextColumn Header="%" Binding="{Binding Percentage, StringFormat=\{0:F1\}%}" Width="80"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- Account balances -->
+            <Border Style="{StaticResource Card}" Margin="0,0,0,20">
+                <StackPanel>
+                    <TextBlock Text="Account Balances" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <DataGrid ItemsSource="{Binding Accounts}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              CanUserAddRows="False" RowHeight="32" FontSize="12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Account" Binding="{Binding Name}" Width="*"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="100"/>
+                            <DataGridTextColumn Header="Balance" Binding="{Binding Balance, StringFormat=C}" Width="120"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- Recent transactions -->
+            <Border Style="{StaticResource Card}">
+                <StackPanel>
+                    <TextBlock Text="Recent Transactions" FontSize="14" FontWeight="SemiBold" Margin="0,0,0,12"/>
+                    <DataGrid ItemsSource="{Binding RecentTransactions}"
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                              CanUserAddRows="False" RowHeight="32" FontSize="12">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Date" Binding="{Binding TransactionDate, StringFormat=\{0:yyyy-MM-dd\}}" Width="100"/>
+                            <DataGridTextColumn Header="Description" Binding="{Binding Description}" Width="*"/>
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="80"/>
+                            <DataGridTextColumn Header="Amount" Binding="{Binding Amount, StringFormat=C}" Width="100"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>
