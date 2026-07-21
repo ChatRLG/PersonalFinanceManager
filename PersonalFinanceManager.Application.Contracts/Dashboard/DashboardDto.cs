@@ -1,0 +1,27 @@
+using PersonalFinanceManager.Application.Contracts.Accounts;
+using PersonalFinanceManager.Application.Contracts.Budgets;
+using PersonalFinanceManager.Application.Contracts.Transactions;
+
+namespace PersonalFinanceManager.Application.Contracts.Dashboard;
+
+/// <summary>Aggregated data for the dashboard view. Shared between Web, Desktop, and future clients.</summary>
+public class DashboardDto
+{
+    public decimal TotalBalance { get; set; }
+    public decimal MonthlyIncome { get; set; }
+    public decimal MonthlyExpenses { get; set; }
+    public decimal MonthlySavings => MonthlyIncome - MonthlyExpenses;
+
+    public List<AccountDto> Accounts { get; set; } = new();
+    public List<TransactionDto> RecentTransactions { get; set; } = new();
+    public List<BudgetDto> ActiveBudgets { get; set; } = new();
+    public List<CategorySpendingSummary> SpendingByCategory { get; set; } = new();
+}
+
+public class CategorySpendingSummary
+{
+    public string CategoryName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public string? Colour { get; set; }
+    public decimal Percentage { get; set; }
+}

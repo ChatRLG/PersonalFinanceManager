@@ -7,8 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
+  # ── Cross-platform build + test (Core, Application, Web, API, unit + integration tests) ──
   build-and-test:
-    name: Build and Test
+    name: Build and Test (Linux)
     runs-on: ubuntu-latest
 
     steps:
@@ -21,10 +22,27 @@ jobs:
           dotnet-version: '8.x'
 
       - name: Restore
-        run: dotnet restore PersonalFinanceManager.sln
+        # Exclude the WPF Desktop projects — they target net8.0-windows and won't restore on Linux.
+        run: |
+          dotnet restore PersonalFinanceManager.Core/PersonalFinanceManager.Core.csproj
+          dotnet restore PersonalFinanceManager.Application.Contracts/PersonalFinanceManager.Application.Contracts.csproj
+          dotnet restore PersonalFinanceManager.Application/PersonalFinanceManager.Application.csproj
+          dotnet restore PersonalFinanceManager.Infrastructure/PersonalFinanceManager.Infrastructure.csproj
+          dotnet restore PersonalFinanceManager.API/PersonalFinanceManager.API.csproj
+          dotnet restore PersonalFinanceManager.Web/PersonalFinanceManager.Web.csproj
+          dotnet restore PersonalFinanceManager.UnitTests/PersonalFinanceManager.UnitTests.csproj
+          dotnet restore PersonalFinanceManager.IntegrationTests/PersonalFinanceManager.IntegrationTests.csproj
 
-      - name: Build (all projects)
-        run: dotnet build PersonalFinanceManager.sln --no-restore --configuration Release
+      - name: Build (non-Windows projects)
+        run: |
+          dotnet build PersonalFinanceManager.Core/PersonalFinanceManager.Core.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.Application.Contracts/PersonalFinanceManager.Application.Contracts.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.Application/PersonalFinanceManager.Application.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.Infrastructure/PersonalFinanceManager.Infrastructure.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.API/PersonalFinanceManager.API.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.Web/PersonalFinanceManager.Web.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.UnitTests/PersonalFinanceManager.UnitTests.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.IntegrationTests/PersonalFinanceManager.IntegrationTests.csproj --no-restore --configuration Release
 
       - name: Unit Tests
         run: >
@@ -35,5 +53,35 @@ jobs:
       - name: Integration Tests
         run: >
           dotnet test PersonalFinanceManager.IntegrationTests/PersonalFinanceManager.IntegrationTests.csproj
+          --no-build --configuration Release --verbosity normal
+          --collect:"XPlat Code Coverage"
+
+  # ── Windows build + Desktop tests (WPF requires Windows) ──
+  desktop-tests:
+    name: Desktop Tests (Windows)
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      - name: Restore Desktop projects
+        run: |
+          dotnet restore PersonalFinanceManager.Desktop/PersonalFinanceManager.Desktop.csproj
+          dotnet restore PersonalFinanceManager.Desktop.Tests/PersonalFinanceManager.Desktop.Tests.csproj
+
+      - name: Build Desktop projects
+        run: |
+          dotnet build PersonalFinanceManager.Desktop/PersonalFinanceManager.Desktop.csproj --no-restore --configuration Release
+          dotnet build PersonalFinanceManager.Desktop.Tests/PersonalFinanceManager.Desktop.Tests.csproj --no-restore --configuration Release
+
+      - name: Desktop Sync Tests
+        run: >
+          dotnet test PersonalFinanceManager.Desktop.Tests/PersonalFinanceManager.Desktop.Tests.csproj
           --no-build --configuration Release --verbosity normal
           --collect:"XPlat Code Coverage"

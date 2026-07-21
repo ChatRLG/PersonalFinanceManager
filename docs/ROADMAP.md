@@ -16,7 +16,7 @@
 | 2 — API domain controllers | ✅ Completed 2026-07-03 |
 | 3 — Web end-to-end | ✅ Completed 2026-07-03 |
 | 4 — Tests + CI | ✅ Completed 2026-07-03 |
-| 5 — Desktop (WPF) + sync | ⏳ Next |
+| 5 — Desktop (WPF) + sync | ✅ Completed 2026-07-21 |
 | 6+ — Full suite | ⬜ Planned |
 
 > This file is kept up to date as each phase completes and is committed to the repo.
@@ -192,7 +192,17 @@ Dependency rule: every arrow points inward toward Core. The API depends on Appli
 - [ ] Views: dashboard, transaction entry, reports; data import/export (CSV/Excel).
 
 **Acceptance:** create transactions offline → reconnect → sync reconciles with the API without data loss or duplication.
-**Resources:** WPF — https://learn.microsoft.com/dotnet/desktop/wpf/ · EF Core SQLite — https://learn.microsoft.com/ef/core/providers/sqlite/
+**Completion note (2026-07-21):**
+- `PersonalFinanceManager.Application.Contracts` (net8.0, no Windows dep): shared DTO/request shapes consumed by Web, Desktop, and future Mobile. Response DTOs (AccountDto, TransactionDto, BudgetDto, CategoryDto, DashboardDto, PagedResult, AuthResult) + request models (CreateAccountRequest, CreateTransactionRequest, CreateBudgetRequest, CreateCategoryRequest, UpdateAccountRequest, UpdateBudgetRequest, LoginRequest, RegisterRequest).
+- `PersonalFinanceManager.Desktop` (WPF, net8.0-windows): `IHostBuilder` DI host in `App.xaml.cs`; custom MVVM base classes (`ViewModelBase`, `RelayCommand`, `AsyncRelayCommand`, `AsyncRelayCommand<T>`) — no external toolkit (CommunityToolkit.Mvvm not in the corporate NuGet feed).
+- API client: `ApiClient` / `IApiClient` wrapping `HttpClient`; bearer token injected by `AuthTokenHandler`; `TokenStore` persists JWT via Windows DPAPI (`ProtectedData.Protect`).
+- Offline store: `OfflineDbContext` (EF Core Sqlite 8.0.5); `OfflineTransaction` + `SyncQueueEntry` entities; `OfflineTransactionRepository`; hand-written EF migration.
+- Sync: `SyncService` walks the offline queue ordered by `CreatedAt`; 2xx → `MarkSyncedAsync`; 4xx → `MarkFailedAsync` (no retry); network error / 5xx → leave for next cycle (retry). `BackgroundSyncService` (`IHostedService`) polls every 60 s. Conflict policy: last-write-wins by server `UpdatedAt`.
+- Feature ViewModels + Views (XAML): `LoginWindow`, `MainWindow` (nav shell + DataTemplate routing), `DashboardView`, `AccountListView`, `TransactionListView` (offline-capable create), `BudgetListView`, `ReportsView`.
+- CSV import/export: `CsvService` / `ICsvService` — no external library, RFC 4180 splitter, SaveFileDialog integration in `ReportsViewModel`.
+- Tests: `PersonalFinanceManager.Desktop.Tests` (net8.0-windows) — 6 unit tests for `SyncService` (happy path, no-pending, offline skip, 4xx fail, network error no-retry, multi-item).
+- CI: `ci.yml` split into two jobs — `ubuntu-latest` for all cross-platform projects; `windows-latest` for Desktop build + Desktop.Tests.
+- Feed-constrained package versions: `Microsoft.Extensions.Hosting` 9.0.4, `Microsoft.Extensions.Http` 8.0.0, `Microsoft.EntityFrameworkCore.Sqlite` 8.0.5, `System.Text.Json` 9.0.4, `System.Collections.Immutable` 9.0.0.
 
 **Design-for-now (so the full suite drops in later):** extract shared DTOs/contracts into one library in this phase; keep the API the single source of truth; keep auth stateless (JWT) so Mobile reuses it unchanged.
 
