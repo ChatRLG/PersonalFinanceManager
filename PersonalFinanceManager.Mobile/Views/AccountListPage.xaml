@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PersonalFinanceManager.Mobile.ViewModels"
+             xmlns:dto="clr-namespace:PersonalFinanceManager.Application.Contracts.Accounts;assembly=PersonalFinanceManager.Application.Contracts"
+             x:Class="PersonalFinanceManager.Mobile.Views.AccountListPage"
+             x:DataType="vm:AccountListViewModel"
+             Title="Accounts">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add" Command="{Binding ShowCreateFormCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="12">
+
+                <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                <Frame IsVisible="{Binding ShowCreateForm}" Padding="12">
+                    <VerticalStackLayout Spacing="8">
+                        <Entry Placeholder="Account name" Text="{Binding NewName}" />
+                        <Picker Title="Type" ItemsSource="{Binding AccountTypes}" SelectedItem="{Binding NewType}" />
+                        <Picker Title="Currency" ItemsSource="{Binding Currencies}" SelectedItem="{Binding NewCurrency}" />
+                        <Entry Placeholder="Initial balance" Keyboard="Numeric" Text="{Binding NewInitialBalance}" />
+                        <Entry Placeholder="Description (optional)" Text="{Binding NewDescription}" />
+                        <HorizontalStackLayout Spacing="8">
+                            <Button Text="Create" Command="{Binding CreateCommand}" />
+                            <Button Text="Cancel" Command="{Binding CancelCreateCommand}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <CollectionView ItemsSource="{Binding Accounts}"
+                                SelectionMode="Single"
+                                SelectedItem="{Binding SelectedAccount}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dto:AccountDto">
+                            <Grid Padding="8" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" />
+                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding Balance, StringFormat='{0:C}'}" />
+                                <Label Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                       Text="{Binding Type, StringFormat='{0} · '}" FontSize="12" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <HorizontalStackLayout Spacing="8" IsVisible="{Binding SelectedAccount, Converter={StaticResource IsNotNullConverter}}">
+                    <Button Text="Toggle active" Command="{Binding ToggleActiveCommand}" />
+                    <Button Text="Delete" Command="{Binding DeleteCommand}" />
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PersonalFinanceManager.Mobile.ViewModels"
+             xmlns:dto="clr-namespace:PersonalFinanceManager.Application.Contracts.Budgets;assembly=PersonalFinanceManager.Application.Contracts"
+             x:Class="PersonalFinanceManager.Mobile.Views.BudgetListPage"
+             x:DataType="vm:BudgetListViewModel"
+             Title="Budgets">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add" Command="{Binding ShowCreateFormCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="12">
+
+                <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                <Frame IsVisible="{Binding ShowCreateForm}" Padding="12">
+                    <VerticalStackLayout Spacing="8">
+                        <Entry Placeholder="Budget name" Text="{Binding NewName}" />
+                        <Entry Placeholder="Limit" Keyboard="Numeric" Text="{Binding NewLimit}" />
+                        <Picker Title="Currency" ItemsSource="{Binding Currencies}" SelectedItem="{Binding NewCurrency}" />
+                        <Picker Title="Period" ItemsSource="{Binding Periods}" SelectedItem="{Binding NewPeriod}" />
+                        <DatePicker Date="{Binding NewStartDate}" />
+                        <DatePicker Date="{Binding NewEndDate}" />
+                        <Picker Title="Category" ItemsSource="{Binding Categories}"
+                                ItemDisplayBinding="{Binding Name}" />
+                        <HorizontalStackLayout Spacing="8">
+                            <Button Text="Create" Command="{Binding CreateCommand}" />
+                            <Button Text="Cancel" Command="{Binding CancelCreateCommand}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <CollectionView ItemsSource="{Binding Budgets}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dto:BudgetDto">
+                            <VerticalStackLayout Padding="8" Spacing="4">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0" Text="{Binding Name}" FontAttributes="Bold" />
+                                    <Button Grid.Column="1" Text="Delete" FontSize="12"
+                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:BudgetListViewModel}}, Path=DeleteCommand}"
+                                            CommandParameter="{Binding .}" />
+                                </Grid>
+                                <ProgressBar Progress="{Binding PercentageUsed, Converter={StaticResource PercentageToProgressConverter}}" />
+                                <Label Text="{Binding Remaining, StringFormat='Remaining: {0:C}'}" FontSize="12" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

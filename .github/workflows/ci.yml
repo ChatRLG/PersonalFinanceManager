@@ -85,3 +85,46 @@ jobs:
           dotnet test PersonalFinanceManager.Desktop.Tests/PersonalFinanceManager.Desktop.Tests.csproj
           --no-build --configuration Release --verbosity normal
           --collect:"XPlat Code Coverage"
+
+  # ── Mobile (Android/MAUI) build + tests ──
+  # Note: PersonalFinanceManager.Mobile itself is net9.0-android and currently
+  # cannot restore on this corporate feed — see docs/ROADMAP.md Phase 6a
+  # (Xamarin.AndroidX.*/Xamarin.Google.* packages are absent from the feed and
+  # nuget.org is blocked on this network). The Mobile.csproj build step below
+  # is expected to fail restore until that's resolved; Mobile.Tests (plain
+  # net9.0, no Android workload needed) is unaffected and should pass.
+  mobile:
+    name: Mobile (Android) Build + Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.x'
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Restore Mobile
+        run: dotnet restore PersonalFinanceManager.Mobile/PersonalFinanceManager.Mobile.csproj
+        continue-on-error: true
+
+      - name: Build Mobile
+        run: dotnet build PersonalFinanceManager.Mobile/PersonalFinanceManager.Mobile.csproj --configuration Release
+        continue-on-error: true
+
+      - name: Restore Mobile.Tests
+        run: dotnet restore PersonalFinanceManager.Mobile.Tests/PersonalFinanceManager.Mobile.Tests.csproj
+
+      - name: Build Mobile.Tests
+        run: dotnet build PersonalFinanceManager.Mobile.Tests/PersonalFinanceManager.Mobile.Tests.csproj --no-restore --configuration Release
+
+      - name: Mobile Tests
+        run: >
+          dotnet test PersonalFinanceManager.Mobile.Tests/PersonalFinanceManager.Mobile.Tests.csproj
+          --no-build --configuration Release --verbosity normal
+          --collect:"XPlat Code Coverage"

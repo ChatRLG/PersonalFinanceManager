@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PersonalFinanceManager.Mobile.ViewModels"
+             xmlns:dto="clr-namespace:PersonalFinanceManager.Application.Contracts.Transactions;assembly=PersonalFinanceManager.Application.Contracts"
+             x:Class="PersonalFinanceManager.Mobile.Views.TransactionListPage"
+             x:DataType="vm:TransactionListViewModel"
+             Title="Transactions">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Add" Command="{Binding ShowCreateFormCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <!-- Pull-to-refresh doubles as a manual "sync now" trigger — see SyncService's
+         Android background-limitation note in docs/ROADMAP.md Phase 6a. -->
+    <RefreshView Command="{Binding SyncNowCommand}" IsRefreshing="{Binding IsBusy}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="12">
+
+                <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                <Frame IsVisible="{Binding ShowCreateForm}" Padding="12">
+                    <VerticalStackLayout Spacing="8">
+                        <Entry Placeholder="Amount" Keyboard="Numeric" Text="{Binding NewAmount}" />
+                        <Picker Title="Type" ItemsSource="{Binding TransactionTypes}" SelectedItem="{Binding NewType}" />
+                        <Entry Placeholder="Description" Text="{Binding NewDescription}" />
+                        <Entry Placeholder="Notes (optional)" Text="{Binding NewNotes}" />
+                        <DatePicker Date="{Binding NewDate}" />
+                        <Picker Title="Category" ItemsSource="{Binding Categories}"
+                                ItemDisplayBinding="{Binding Name}"
+                                SelectedItem="{Binding SelectedCategory}" />
+                        <HorizontalStackLayout Spacing="8">
+                            <Button Text="Save" Command="{Binding CreateCommand}" />
+                            <Button Text="Cancel" Command="{Binding CancelCreateCommand}" />
+                        </HorizontalStackLayout>
+                    </VerticalStackLayout>
+                </Frame>
+
+                <CollectionView ItemsSource="{Binding Transactions}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dto:TransactionDto">
+                            <Grid Padding="8" ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto">
+                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding Description}" FontAttributes="Bold" />
+                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding Amount, StringFormat='{0:C}'}" />
+                                <Label Grid.Row="1" Grid.Column="0" Text="{Binding CategoryName}" FontSize="12" />
+                                <Button Grid.Row="1" Grid.Column="1" Text="Delete" FontSize="12"
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:TransactionListViewModel}}, Path=DeleteCommand}"
+                                        CommandParameter="{Binding .}" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                    <Button Text="Prev" Command="{Binding PrevPageCommand}" />
+                    <Label Text="{Binding CurrentPage, StringFormat='Page {0}'}" VerticalOptions="Center" />
+                    <Button Text="Next" Command="{Binding NextPageCommand}" />
+                </HorizontalStackLayout>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>
