@@ -23,6 +23,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinanceManager.Desk
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinanceManager.Desktop.Tests", "PersonalFinanceManager.Desktop.Tests\PersonalFinanceManager.Desktop.Tests.csproj", "{CC555720-915C-4821-B00F-774140C23DFE}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinanceManager.Mobile", "PersonalFinanceManager.Mobile\PersonalFinanceManager.Mobile.csproj", "{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PersonalFinanceManager.Mobile.Tests", "PersonalFinanceManager.Mobile.Tests\PersonalFinanceManager.Mobile.Tests.csproj", "{94C312E7-654A-4A04-9DE2-74F466A0D49A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -153,6 +157,30 @@ Global
 		{CC555720-915C-4821-B00F-774140C23DFE}.Release|x64.Build.0 = Release|Any CPU
 		{CC555720-915C-4821-B00F-774140C23DFE}.Release|x86.ActiveCfg = Release|Any CPU
 		{CC555720-915C-4821-B00F-774140C23DFE}.Release|x86.Build.0 = Release|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Debug|x64.Build.0 = Debug|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Debug|x86.Build.0 = Debug|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Release|x64.ActiveCfg = Release|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Release|x64.Build.0 = Release|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Release|x86.ActiveCfg = Release|Any CPU
+		{7F563AF3-E334-430E-A51B-0F5A4E3DEFC0}.Release|x86.Build.0 = Release|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Debug|x64.Build.0 = Debug|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Debug|x86.Build.0 = Debug|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Release|x64.ActiveCfg = Release|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Release|x64.Build.0 = Release|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Release|x86.ActiveCfg = Release|Any CPU
+		{94C312E7-654A-4A04-9DE2-74F466A0D49A}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

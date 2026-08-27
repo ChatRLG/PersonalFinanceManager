@@ -4,8 +4,8 @@
 > **Web + API** product, then a **WPF Desktop** client, with the architecture
 > deliberately prepared for the later **full suite** (Mobile, cloud, advanced).
 
-**Committed scope (now):** Phases 0–5 (Web+API MVP → Quality → Desktop).
-**Planned next (after Phase 5 passes dev tests):** Phase 6+ (Mobile, Azure/CI-CD, advanced).
+**Committed scope (now):** Phases 0–5 (Web+API MVP → Quality → Desktop) + Phase 6a (Mobile).
+**Planned next (after Phase 6a's feed blocker is resolved):** Phase 6b+ (notifications, biometrics, CSV, Azure/CI-CD, advanced).
 
 ## Progress
 
@@ -17,7 +17,8 @@
 | 3 — Web end-to-end | ✅ Completed 2026-07-03 |
 | 4 — Tests + CI | ✅ Completed 2026-07-03 |
 | 5 — Desktop (WPF) + sync | ✅ Completed 2026-07-21 |
-| 6+ — Full suite | ⬜ Planned |
+| 6a — Mobile (MAUI) | 🚧 In progress |
+| 6b+ — Full suite | ⬜ Planned |
 
 > This file is kept up to date as each phase completes and is committed to the repo.
 
@@ -208,9 +209,31 @@ Dependency rule: every arrow points inward toward Core. The API depends on Appli
 
 ---
 
-### Phase 6+ — Full suite — *planned (after Phase 5 dev tests pass)*
+### Phase 6a — Mobile (MAUI)
+**Goal:** an Android app for offline expense entry that authenticates against the same API and syncs like Desktop, matching Desktop's MVP feature parity (no push notifications or biometric unlock yet — see Phase 6b+).
 
-- **Mobile (.NET MAUI):** reuse the shared contracts + API client; quick expense entry, offline cache, push notifications for budget alerts, biometric unlock.
+- [x] `PersonalFinanceManager.Mobile` (.NET MAUI, `net9.0-android` only — WindowsAppSDK not in the corporate feed), MVVM, `Microsoft.Extensions.DependencyInjection` via `MauiProgram.cs`. Duplicates (does not extract into a shared library) Desktop's offline-sync stack, consistent with how Phase 5 scoped Desktop/Web duplication — small near-duplicate code is an accepted trade-off.
+- [x] **API client:** `ApiClient`/`IApiClient` copied unchanged from Desktop (fully portable — depends only on `Application.Contracts` DTOs). `AuthTokenHandler` copied, adapted for an async token store.
+- [x] **Secure token storage:** `TokenStore` reimplemented (not copied) on `Microsoft.Maui.Storage.SecureStorage` (Android Keystore-backed) in place of Desktop's Windows-DPAPI version — same intent, async public surface (`SaveAsync`/`LoadAsync`/`GetTokenAsync`/`Clear`) since `SecureStorage` is async; `AuthService`/`AuthTokenHandler` adapted accordingly.
+- [x] **Offline store:** local SQLite (EF Core SQLite provider) under `FileSystem.AppDataDirectory`; `OfflineTransaction` + `SyncQueueEntry` entities, `OfflineTransactionRepository` copied unchanged from Desktop. Schema created via `EnsureCreatedAsync()` rather than EF migrations — simpler for a disposable local store with no versioned-upgrade need yet, and `net9.0-android` isn't a convenient EF design-time host. Trade-off: future schema changes won't auto-upgrade existing installs; revisit if the offline schema needs to evolve.
+- [x] **Sync service:** `SyncService`/`BackgroundSyncService` copied unchanged (same last-write-wins-by-server-`UpdatedAt` policy as Desktop). Known Android limitation: Doze/battery-optimization can suspend the background poll loop while the app is backgrounded — compensated by also triggering `SyncAsync()` from `TransactionListPage`'s `OnAppearing()` and a pull-to-refresh `RefreshView`, so the offline→reconnect→sync acceptance criteria holds while the app is foregrounded. A WorkManager-backed reliable background scheduler is deferred to Phase 6b+.
+- [x] **MVVM base:** `ViewModelBase`/`RelayCommand`/`AsyncRelayCommand`/`AsyncRelayCommand<T>` copied from Desktop with one adaptation — WPF's `CommandManager.RequerySuggested` (unavailable outside `PresentationFramework`) replaced with a manually-raised `CanExecuteChanged` event, invoked at the same state-change points Desktop called `InvalidateRequerySuggested()`.
+- [x] **Navigation:** Desktop's `MainViewModel`/`MainWindow` DataTemplate-routing shell replaced with native MAUI Shell routing — a `TabBar` (Dashboard/Accounts/Transactions/Budgets/Reports) plus a non-tab `LoginPage` route. Pages are constructor-injected via DI. Added a "stay logged in" enhancement over Desktop (checks `IAuthService.IsAuthenticated` at startup and skips Login if a valid token is already persisted) — near-zero extra work given `SecureStorage` already persists the token across launches.
+- [x] **Feature ViewModels + Pages:** `LoginPage`, `DashboardPage` (with logout), `AccountListPage`, `TransactionListPage` (offline-capable create, reuses `IOfflineTransactionRepository`/`IConnectivityService`/`ISyncService` exactly as Desktop's pattern), `BudgetListPage`, `ReportsPage` (read-only summary — no CSV, see below). ViewModel logic copied from Desktop's equivalents essentially unchanged; Views are new MAUI XAML (`DataGrid`→`CollectionView`, `ComboBox`→`Picker`, `PasswordBox`→`Entry IsPassword="True"`, `ProgressBar` direct).
+- [x] **Scope cut (intentional):** CSV import/export deferred to Phase 6b+ — Desktop's `CsvService` depends on `Microsoft.Win32.SaveFileDialog` (Windows-only); a MAUI-correct replacement (`Share`/`FileSystem.CacheDirectory`) is straightforward but not required for MVP parity (auth + offline CRUD + sync). Push notifications and biometric unlock are likewise deferred to 6b+.
+- [x] Tests: `PersonalFinanceManager.Mobile.Tests` (`net9.0`, not `-android` — Android unit testing is impractical) links the real Mobile service/data `.cs` files via `<Compile Include>` (one copy of the logic, two TFMs: `IApiClient`/`ApiClient`, `IConnectivityService`/`ConnectivityService`, `ISyncService`/`SyncService`, `OfflineTransaction`/`SyncQueueEntry`, `OfflineDbContext`, `IOfflineTransactionRepository`/`OfflineTransactionRepository`). Mirrors Desktop's 6 `SyncServiceTests` exactly — all passing.
+- [x] CI: new `mobile` job (`ubuntu-latest`) in `ci.yml` — installs the `maui-android` workload, builds `PersonalFinanceManager.Mobile.csproj` (`continue-on-error` — see blocker note below) and `PersonalFinanceManager.Mobile.Tests.csproj`, runs Mobile.Tests.
+
+**Acceptance:** create a transaction offline (airplane mode) on the Android emulator → reconnect → sync reconciles with the API without data loss or duplication (same acceptance bar as Desktop's Phase 5); login persists across app relaunch; `dotnet test PersonalFinanceManager.Mobile.Tests` green; CI `mobile` job's test step green.
+**Completion note (2026-08-27):** All Mobile app code (services, offline data layer, sync, MVVM base, Shell navigation, 6 feature pages) and `PersonalFinanceManager.Mobile.Tests` (6/6 passing) are written and both projects are in the `.sln`.
+**⚠️ Known blocker — Mobile app itself cannot be locally built/run yet:** the corporate NuGet feed does not carry several packages the `net9.0-android` workload requires to restore (`Xamarin.AndroidX.Browser`, `Xamarin.AndroidX.Navigation.*`, `Xamarin.Google.Android.Material`, `SQLitePCLRaw.lib.e_sqlite3.android`, and transitive `Microsoft.Extensions.*` versions ≥ 9.0.8) — confirmed entirely absent from the feed, not merely an older version (same class of gap as the BCrypt/CommunityToolkit.Mvvm/WindowsAppSDK feed constraints noted elsewhere in this doc). `nuget.org` is also blocked (403) on this network, so there's no fallback source. **This must be resolved (mirror the missing packages into the corporate feed, or get NuGet.org access) before the emulator run-through in the Acceptance criteria above can be completed.** The `Mobile.Tests` project is unaffected (plain `net9.0`, no Android packages) and its 6 tests pass locally today, which validates the sync/offline logic independently of this blocker.
+**Resources:** .NET MAUI — https://learn.microsoft.com/dotnet/maui/ · Shell navigation — https://learn.microsoft.com/dotnet/maui/fundamentals/shell/ · SecureStorage — https://learn.microsoft.com/dotnet/maui/platform-integration/storage/secure-storage/
+
+---
+
+### Phase 6b+ — Full suite — *planned (after Phase 6a's feed blocker is resolved and the emulator walkthrough passes)*
+
+- **Mobile follow-ups:** push notifications for budget alerts, biometric unlock, CSV import/export (`Share`/`FileSystem.CacheDirectory`), and a WorkManager-backed reliable background sync scheduler (replacing the best-effort foreground-triggered sync from 6a).
 - **Cloud + DevOps:** Azure SQL, App Service for API + Web, CI/CD pipeline, monitoring/logging (App Insights).
 - **Advanced:** SignalR (real-time budget/transaction updates), ML.NET (spend prediction / anomaly detection), Hangfire (recurring-transaction generation, budget-period rollover, alert jobs).
 
@@ -226,4 +249,5 @@ Dependency rule: every arrow points inward toward Core. The API depends on Appli
 | Auth/ownership gaps leak cross-user data | Always scope by `ICurrentUser.UserId` server-side (#3); negative tests. |
 | `EnsureCreated`/reset destroys data | Switch to migrations in Phase 0 before building features. |
 | DTO duplication across Web/Desktop/Mobile | Extract a shared contracts library in Phase 5. |
-| Scope creep into the full suite too early | Gate Phase 6+ on Phase 5 passing dev tests (your stated plan). |
+| Scope creep into the full suite too early | Gate Phase 6b+ on Phase 6a's feed blocker being resolved and its emulator walkthrough passing. |
+| Corporate feed lacks required Android workload packages | Flagged in Phase 6a's completion note; app code is complete and Mobile.Tests validates the portable logic independently — resolving the feed is a separate, tracked follow-up. |

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PersonalFinanceManager.Mobile.ViewModels"
+             xmlns:accDto="clr-namespace:PersonalFinanceManager.Application.Contracts.Accounts;assembly=PersonalFinanceManager.Application.Contracts"
+             xmlns:txDto="clr-namespace:PersonalFinanceManager.Application.Contracts.Transactions;assembly=PersonalFinanceManager.Application.Contracts"
+             xmlns:dashDto="clr-namespace:PersonalFinanceManager.Application.Contracts.Dashboard;assembly=PersonalFinanceManager.Application.Contracts"
+             x:Class="PersonalFinanceManager.Mobile.Views.ReportsPage"
+             x:DataType="vm:ReportsViewModel"
+             Title="Reports">
+    <!--
+      Read-only summary — CSV export is intentionally not ported from Desktop.
+      Desktop's ICsvService uses Microsoft.Win32.SaveFileDialog (Windows-only);
+      a MAUI-correct replacement (Share / FileSystem.CacheDirectory) is deferred
+      to Phase 6b. See docs/ROADMAP.md.
+    -->
+
+    <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="16">
+
+                <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                    <Frame Grid.Row="0" Grid.Column="0" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Total Balance" FontSize="12" />
+                            <Label Text="{Binding TotalBalance, StringFormat='{0:C}'}" FontSize="18" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame Grid.Row="0" Grid.Column="1" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Savings (Month)" FontSize="12" />
+                            <Label Text="{Binding MonthlySavings, StringFormat='{0:C}'}" FontSize="18" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame Grid.Row="1" Grid.Column="0" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Income (Month)" FontSize="12" />
+                            <Label Text="{Binding MonthlyIncome, StringFormat='{0:C}'}" FontSize="16" />
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame Grid.Row="1" Grid.Column="1" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Expenses (Month)" FontSize="12" />
+                            <Label Text="{Binding MonthlyExpenses, StringFormat='{0:C}'}" FontSize="16" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
+
+                <Label Text="Accounts" Style="{StaticResource Headline}" FontSize="16" />
+                <CollectionView ItemsSource="{Binding Accounts}" HeightRequest="160">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="accDto:AccountDto">
+                            <Grid Padding="4" ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Text="{Binding Name}" />
+                                <Label Grid.Column="1" Text="{Binding Balance, StringFormat='{0:C}'}" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Label Text="Recent Transactions" Style="{StaticResource Headline}" FontSize="16" />
+                <CollectionView ItemsSource="{Binding RecentTransactions}" HeightRequest="220">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="txDto:TransactionDto">
+                            <Grid Padding="4" ColumnDefinitions="*,Auto">
+                                <Label Grid.Column="0" Text="{Binding Description}" />
+                                <Label Grid.Column="1" Text="{Binding Amount, StringFormat='{0:C}'}" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Label Text="Spending by Category" Style="{StaticResource Headline}" FontSize="16" />
+                <CollectionView ItemsSource="{Binding SpendingByCategory}" HeightRequest="200">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dashDto:CategorySpendingSummary">
+                            <Grid Padding="4" ColumnDefinitions="*,Auto,Auto">
+                                <Label Grid.Column="0" Text="{Binding CategoryName}" />
+                                <Label Grid.Column="1" Text="{Binding Amount, StringFormat='{0:C}'}" />
+                                <Label Grid.Column="2" Text="{Binding Percentage, StringFormat='{0:F1}%'}" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

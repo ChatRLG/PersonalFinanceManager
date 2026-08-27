@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:PersonalFinanceManager.Mobile.ViewModels"
+             xmlns:dto="clr-namespace:PersonalFinanceManager.Application.Contracts.Transactions;assembly=PersonalFinanceManager.Application.Contracts"
+             xmlns:budgetDto="clr-namespace:PersonalFinanceManager.Application.Contracts.Budgets;assembly=PersonalFinanceManager.Application.Contracts"
+             x:Class="PersonalFinanceManager.Mobile.Views.DashboardPage"
+             x:DataType="vm:DashboardViewModel"
+             Title="Dashboard">
+
+    <ContentPage.ToolbarItems>
+        <ToolbarItem Text="Logout" Command="{Binding LogoutCommand}" />
+    </ContentPage.ToolbarItems>
+
+    <RefreshView Command="{Binding LoadCommand}" IsRefreshing="{Binding IsBusy}">
+        <ScrollView>
+            <VerticalStackLayout Padding="16" Spacing="12">
+
+                <Label Text="{Binding UserName, StringFormat='Welcome, {0}'}" Style="{StaticResource SubHeadline}" />
+
+                <Label Text="{Binding ErrorMessage}" TextColor="Red"
+                       IsVisible="{Binding ErrorMessage, Converter={StaticResource StringNotEmptyConverter}}" />
+
+                <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="8" RowSpacing="8">
+                    <Frame Grid.Row="0" Grid.Column="0" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Total Balance" FontSize="12" />
+                            <Label Text="{Binding TotalBalance, StringFormat='{0:C}'}" FontSize="20" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame Grid.Row="0" Grid.Column="1" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Monthly Savings" FontSize="12" />
+                            <Label Text="{Binding MonthlySavings, StringFormat='{0:C}'}" FontSize="20" FontAttributes="Bold" />
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame Grid.Row="1" Grid.Column="0" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Income (Month)" FontSize="12" />
+                            <Label Text="{Binding MonthlyIncome, StringFormat='{0:C}'}" FontSize="18" />
+                        </VerticalStackLayout>
+                    </Frame>
+                    <Frame Grid.Row="1" Grid.Column="1" Padding="12">
+                        <VerticalStackLayout>
+                            <Label Text="Expenses (Month)" FontSize="12" />
+                            <Label Text="{Binding MonthlyExpenses, StringFormat='{0:C}'}" FontSize="18" />
+                        </VerticalStackLayout>
+                    </Frame>
+                </Grid>
+
+                <Label Text="Recent Transactions" Style="{StaticResource Headline}" FontSize="16" />
+                <CollectionView ItemsSource="{Binding RecentTransactions}" HeightRequest="220">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="dto:TransactionDto">
+                            <Grid Padding="4" ColumnDefinitions="*,Auto">
+                                <VerticalStackLayout Grid.Column="0">
+                                    <Label Text="{Binding Description}" FontAttributes="Bold" />
+                                    <Label Text="{Binding CategoryName}" FontSize="12" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="{Binding Amount, StringFormat='{0:C}'}" VerticalOptions="Center" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <Label Text="Active Budgets" Style="{StaticResource Headline}" FontSize="16" />
+                <CollectionView ItemsSource="{Binding ActiveBudgets}" HeightRequest="200">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate x:DataType="budgetDto:BudgetDto">
+                            <VerticalStackLayout Padding="4" Spacing="2">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" />
+                                <ProgressBar Progress="{Binding PercentageUsed, Converter={StaticResource PercentageToProgressConverter}}" />
+                                <Label Text="{Binding Remaining, StringFormat='Remaining: {0:C}'}" FontSize="12" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </RefreshView>
+
+</ContentPage>

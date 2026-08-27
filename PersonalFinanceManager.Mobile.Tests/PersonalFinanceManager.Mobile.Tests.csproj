@@ -1,0 +1,58 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- Plain net9.0, NOT net9.0-android — Android unit testing is impractical
+         and unnecessary here. Links the real Mobile service/data source files
+         below so the tests exercise the exact same logic as the app, with only
+         the TFM differing (see docs/ROADMAP.md Phase 6a). -->
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk"    Version="17.10.0" />
+    <PackageReference Include="xunit"                     Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Moq"                       Version="4.20.70" />
+    <PackageReference Include="FluentAssertions"          Version="6.12.0" />
+    <PackageReference Include="coverlet.collector"        Version="6.0.4">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+    </PackageReference>
+    <!-- Offline data layer (linked below) needs the EF Sqlite provider to compile. -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="8.0.5" />
+    <!-- Resolve version conflicts, matching Desktop.Tests -->
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+    <PackageReference Include="System.Text.Json" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\PersonalFinanceManager.Application.Contracts\PersonalFinanceManager.Application.Contracts.csproj" />
+    <ProjectReference Include="..\PersonalFinanceManager.Core\PersonalFinanceManager.Core.csproj" />
+  </ItemGroup>
+
+  <!-- Link (not copy) the platform-agnostic Mobile service/data classes so tests
+       exercise the exact same source as the app, with only the TFM differing.
+       TokenStore/AuthTokenHandler/AuthService are excluded — they depend on
+       Microsoft.Maui.Storage.SecureStorage, unavailable outside the Android
+       workload, and no test scenarios need them this phase. -->
+  <ItemGroup>
+    <Compile Include="..\PersonalFinanceManager.Mobile\Services\IApiClient.cs" Link="Linked\IApiClient.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Services\ApiClient.cs" Link="Linked\ApiClient.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Services\IConnectivityService.cs" Link="Linked\IConnectivityService.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Services\ConnectivityService.cs" Link="Linked\ConnectivityService.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Services\ISyncService.cs" Link="Linked\ISyncService.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Services\SyncService.cs" Link="Linked\SyncService.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Data\Entities\OfflineTransaction.cs" Link="Linked\OfflineTransaction.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Data\Entities\SyncQueueEntry.cs" Link="Linked\SyncQueueEntry.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Data\OfflineDbContext.cs" Link="Linked\OfflineDbContext.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Data\IOfflineTransactionRepository.cs" Link="Linked\IOfflineTransactionRepository.cs" />
+    <Compile Include="..\PersonalFinanceManager.Mobile\Data\OfflineTransactionRepository.cs" Link="Linked\OfflineTransactionRepository.cs" />
+  </ItemGroup>
+
+</Project>
